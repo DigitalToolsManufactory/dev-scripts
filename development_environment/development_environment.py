@@ -16,6 +16,13 @@ class DevelopmentEnvironment:
     ROOT_DIRECTORY: ClassVar[str] = ".dev-env"
     GIT_DIRECTORY: ClassVar[str] = ".git"
 
+    def store(self) -> None:
+        root_dir: Path = Path(self.root, DevelopmentEnvironment.ROOT_DIRECTORY)
+        root_dir.mkdir(parents=True, exist_ok=True)
+
+        self.git_configuration.store(root_dir)
+
+    # region load
     @staticmethod
     def load(current_directory: Path, shell: Optional[Shell] = None) -> "DevelopmentEnvironment":
         root_dir: Optional[Path] = DevelopmentEnvironment._get_root_directory(current_directory)
@@ -46,3 +53,17 @@ class DevelopmentEnvironment:
             current_directory = current_directory.parent
 
         return None
+
+    # endregion
+
+    # region infer
+    @staticmethod
+    def infer(directory: Path, shell: Optional[Shell] = None) -> "DevelopmentEnvironment":
+        shell = get_or_else(shell, DefaultShell.new)
+        return DevelopmentEnvironment(
+            directory,
+            shell,
+            GitConfiguration.infer(directory, shell)
+        )
+
+    # endregion

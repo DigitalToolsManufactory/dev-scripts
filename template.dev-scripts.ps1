@@ -6,6 +6,15 @@ function _current_dir()
     return "`"$currentDir`""
 }
 
+function dev()
+{
+    Invoke-Expression "$__scripts_path/.venv/Scripts/activate.ps1" > $null
+
+    Invoke-Expression "python $__scripts_path/dev.py $args"
+
+    Invoke-Expression "deactivate" > $null
+}
+
 function gch()
 {
     Invoke-Expression "$__scripts_path/.venv/Scripts/activate.ps1" > $null

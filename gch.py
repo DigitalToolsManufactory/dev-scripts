@@ -4,12 +4,12 @@ from typing import Any, Optional, List, Tuple
 
 from development_environment.development_environment import DevelopmentEnvironment
 from development_environment.git_configuration import GitRemote
+from shell.command.get_git_remote_head_branch import GetGitRemoteHeadBranch
 from shell.shell import Shell
 from shell.shell_response import ShellResponse
 from utility.type_utility import get_or_else
 
 __DEFAULT_REMOTE_NAME: str = "origin"
-__HEAD_BRANCH_PREFIX: str = "HEAD branch: "
 
 
 def checkout_head_branch(repository: Path, remote_name: Optional[str] = None, shell: Optional[Shell] = None) -> None:
@@ -35,7 +35,7 @@ def _get_head_branch(dev_env: DevelopmentEnvironment, remote_name: Optional[str]
 
     # Option 2: Get the head branch via git command for a given remote name
     if remote_name is not None:
-        head_branch: Optional[str] = _get_git_head_branch(dev_env, remote_name)
+        head_branch: Optional[str] = GetGitRemoteHeadBranch.run(dev_env.root, remote_name, dev_env.shell)
 
         if head_branch is not None:
             return remote_name, head_branch
@@ -47,7 +47,7 @@ def _get_head_branch(dev_env: DevelopmentEnvironment, remote_name: Optional[str]
     # Option 3 (A): The list of remotes contains the default remote name
     # --> assume the user wants to use this remote
     if __DEFAULT_REMOTE_NAME in remote_names:
-        head_branch: Optional[str] = _get_git_head_branch(dev_env, __DEFAULT_REMOTE_NAME)
+        head_branch: Optional[str] = GetGitRemoteHeadBranch.run(dev_env.root, __DEFAULT_REMOTE_NAME, dev_env.shell)
 
         if head_branch is not None:
             return __DEFAULT_REMOTE_NAME, head_branch
@@ -55,27 +55,12 @@ def _get_head_branch(dev_env: DevelopmentEnvironment, remote_name: Optional[str]
     # Option 3 (B): The list of remotes does NOT contain the default remote name
     # --> loop through all existing remotes until we find a head branch
     for name in remote_names:
-        head_branch: Optional[str] = _get_git_head_branch(dev_env, name)
+        head_branch: Optional[str] = GetGitRemoteHeadBranch.run(dev_env.root, name, dev_env.shell)
 
         if head_branch is not None:
             return name, head_branch
 
     raise Exception(f"Unable to determine the HEAD branch for repository at '{dev_env.root.absolute()}'.")
-
-
-def _get_git_head_branch(dev_env: DevelopmentEnvironment, remote_name: str) -> Optional[str]:
-    git_remote_show: ShellResponse = dev_env.shell.run("git",
-                                                       ["remote", "show", remote_name],
-                                                       dev_env.root)
-
-    if not git_remote_show.is_success:
-        return None
-
-    for line in [line.strip() for line in git_remote_show.get_stdout_lines()]:
-        if line.startswith(__HEAD_BRANCH_PREFIX):
-            return line.removeprefix(__HEAD_BRANCH_PREFIX)
-
-    return None
 
 
 def main() -> None:
