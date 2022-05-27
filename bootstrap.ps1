@@ -1,5 +1,6 @@
 python -m venv .venv > $null
 ./.venv/Scripts/activate.ps1 > $null
+python -m pip install --upgrade pip > $null
 
 pip install -r requirements.txt > $null
 
