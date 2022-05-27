@@ -5,7 +5,7 @@ from typing import List
 
 def bootstrap_windows_commands() -> None:
     current_path: Path = Path(__file__).parent.resolve().absolute()
-    template_path: Path = Path(current_path, "dev-scripts.template.ps1")
+    template_path: Path = Path(current_path, "template.dev-scripts.ps1")
     scripts_path: Path = Path(current_path, "dev-scripts.ps1")
 
     with template_path.open("r") as f:
