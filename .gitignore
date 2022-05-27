@@ -130,4 +130,4 @@ dmypy.json
 .pyre/
 
 dev-scripts.*
-./.dev-env/**
+/.dev-env/
