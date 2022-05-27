@@ -1,4 +1,4 @@
-$__scripts_path = "C:/sap/tools.github/dev-scripts"
+$__scripts_path = ""
 
 function _current_dir()
 {
