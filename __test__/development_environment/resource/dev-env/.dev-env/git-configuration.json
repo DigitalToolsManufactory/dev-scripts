@@ -1,0 +1,8 @@
+{
+  "remotes": [
+    {
+      "name": "origin",
+      "head_branch": "master"
+    }
+  ]
+}
