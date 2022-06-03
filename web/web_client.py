@@ -8,6 +8,16 @@ from web.web_method import WebMethod
 from web.web_response import WebResponse
 
 
+class DefaultWebClient:
+
+    @staticmethod
+    def new() -> "WebClient":
+        return WebClient()
+
+    def __init__(self):
+        raise AssertionError("This utility class must not be instantiated.")
+
+
 class WebClient:
 
     def execute_or_raise(self,
