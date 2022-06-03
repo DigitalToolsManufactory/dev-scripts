@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple, Union, Callable
 
 import requests
 
@@ -9,6 +9,31 @@ from web.web_response import WebResponse
 
 
 class WebClient:
+
+    def execute_or_raise(self,
+                         method: WebMethod,
+                         url: str,
+                         parameters: Optional[Dict[str, str]] = None,
+                         authentication: Optional[Tuple[str, str]] = None,
+                         body: Optional[str] = None,
+                         headers: Optional[Dict[str, List[str]]] = None,
+                         verify: Optional[Union[bool, Path]] = None,
+                         exception: Optional[
+                             Union[Exception, Callable[[WebResponse], Exception]]] = None) -> WebResponse:
+        response: WebResponse = self.execute(method, url, parameters, authentication, body, headers, verify)
+
+        if response.is_okay():
+            return response
+
+        if exception is None:
+            raise Exception(f"The request '{method.name} {url}' returned {response.status_code}:\n"
+                            f"body:\n'{response.body}'\n"
+                            f"headers:\n'{response.headers}'")
+
+        if isinstance(exception, Exception):
+            raise exception
+
+        raise exception(response)
 
     def execute(self,
                 method: WebMethod,
