@@ -29,7 +29,7 @@ class WebClient:
         )
 
         body: str = response.content.decode("UTF-8")
-        headers: Dict[str, List[str]] = {key: [value] for key, value in response.headers}
+        headers: Dict[str, List[str]] = {key: [value] for key, value in response.headers.items()}
 
         return WebResponse(
             response.status_code,
