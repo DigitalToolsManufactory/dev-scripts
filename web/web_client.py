@@ -53,12 +53,13 @@ class WebClient:
                 body: Optional[str] = None,
                 headers: Optional[Dict[str, List[str]]] = None,
                 verify: Optional[Union[bool, Path]] = None) -> WebResponse:
+
         response: requests.Response = requests.request(
             method=method.name,
             url=url,
             params=parameters,
             data=body,
-            headers=headers,
+            headers=self._create_request_headers(headers),
             auth=authentication,
             verify=get_or_else(verify, True)
         )
@@ -71,3 +72,17 @@ class WebClient:
             body,
             headers
         )
+
+    def _create_request_headers(self, headers: Optional[Dict[str, List[str]]]) -> Dict[str, str]:
+        if headers is None:
+            return {}
+
+        result: Dict[str, str] = {}
+        for key, values in headers.items():
+            if key.lower() == "set-cookie":
+                result[key] = ";".join(values)
+
+            else:
+                result[key] = ",".join(values)
+
+        return result
