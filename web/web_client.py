@@ -1,4 +1,4 @@
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 
 import requests
 
@@ -12,9 +12,10 @@ class WebClient:
                 method: WebMethod,
                 url: str,
                 parameters: Optional[Dict[str, str]] = None,
+                authentication: Optional[Tuple[str, str]] = None,
                 body: Optional[str] = None,
                 headers: Optional[Dict[str, List[str]]] = None) -> WebResponse:
-        response: requests.Response = requests.request(method.name, url, parameters, body, headers)
+        response: requests.Response = requests.request(method.name, url, parameters, body, headers, auth=authentication)
 
         body: str = response.content.decode("UTF-8")
         headers: Dict[str, List[str]] = {key: [value] for key, value in response.headers}

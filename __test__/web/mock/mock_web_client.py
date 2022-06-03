@@ -1,9 +1,10 @@
 from dataclasses import dataclass
-from typing import Optional, Dict, List
+from typing import Optional, Dict, List, Tuple
 
 from __test__.dict_matcher import DictMatcher
 from __test__.matcher import Matcher
 from __test__.string_matcher import StringMatcher
+from __test__.tuple_matcher import TupleMatcher
 from web.web_client import WebClient
 from web.web_method import WebMethod
 from web.web_response import WebResponse
@@ -14,6 +15,7 @@ class MockWebRequestInvocation:
     method: WebMethod
     url: str
     parameters: Optional[Dict[str, str]] = None
+    authentication: Optional[Tuple[str, str]] = None
     body: Optional[str] = None
     headers: Optional[Dict[str, List[str]]] = None
 
@@ -23,6 +25,7 @@ class MockWebRequestInvocationMatcher:
     method_matcher: Optional[Matcher[WebMethod]] = None
     url_matcher: Optional[StringMatcher] = None
     parameter_matchers: Optional[List[DictMatcher[str, str]]] = None
+    authentication_matcher: Optional[TupleMatcher[str, str]] = None
     body_matcher: Optional[StringMatcher] = None
     header_matchers: Optional[List[DictMatcher[str, List[str]]]] = None
 
@@ -38,6 +41,9 @@ class MockWebRequestInvocationMatcher:
         if self.parameter_matchers is not None:
             for matcher in self.parameter_matchers:
                 result &= matcher.matches(invocation.parameters)
+
+        if self.authentication_matcher is not None:
+            result &= self.authentication_matcher.matches(invocation.authentication)
 
         if self.body_matcher is not None:
             result &= self.body_matcher.matches(invocation.body)
@@ -67,12 +73,14 @@ class MockWebClient(WebClient):
                 method: WebMethod,
                 url: str,
                 parameters: Optional[Dict[str, str]] = None,
+                authentication: Optional[Tuple[str, str]] = None,
                 body: Optional[str] = None,
                 headers: Optional[Dict[str, List[str]]] = None) -> WebResponse:
         invocation: MockWebRequestInvocation = MockWebRequestInvocation(
             method,
             url,
             parameters,
+            authentication,
             body,
             headers
         )
@@ -84,91 +92,71 @@ class MockWebClient(WebClient):
         raise AssertionError(
             f"No rule specified that matches the following request: {method} {url} {parameters} {body} {headers}")
 
-    # region MockRule builder
-    def when_method(self, matcher: Matcher[WebMethod]) -> "MockWebClient.UrlMatcherBuilder":
-        return MockWebClient.UrlMatcherBuilder(self, matcher)
+    def when_request(self) -> "MockWebClient.RuleBuilderStep1":
+        return MockWebClient.RuleBuilderStep1(self)
 
-    class UrlMatcherBuilder:
+    class RuleBuilderStep1:
+        def __init__(self, mock_client: "MockWebClient"):
+            self._mock_client: MockWebClient = mock_client
+
+        def has_method(self, matcher: Optional[Matcher[WebMethod]]) -> "MockWebClient.RuleBuilderStep2":
+            return MockWebClient.RuleBuilderStep2(
+                self._mock_client,
+                matcher
+            )
+
+    class RuleBuilderStep2:
         def __init__(self,
                      mock_client: "MockWebClient",
-                     method_matcher: Optional[Matcher[WebMethod]] = None):
+                     method_matcher: Optional[Matcher[WebMethod]]):
             self._mock_client: MockWebClient = mock_client
             self._method_matcher: Optional[Matcher[WebMethod]] = method_matcher
 
-        def on_url(self, url_matcher: StringMatcher) -> "MockWebClient.UrlParametersMatcherBuilder":
-            return MockWebClient.UrlParametersMatcherBuilder(
+        def has_url(self, matcher: Optional[StringMatcher]) -> "MockWebClient.RuleBuilderStep3":
+            return MockWebClient.RuleBuilderStep3(
                 self._mock_client,
                 self._method_matcher,
-                url_matcher
+                matcher
             )
 
-    class UrlParametersMatcherBuilder:
+    class RuleBuilderStep3:
         def __init__(self,
                      mock_client: "MockWebClient",
-                     method_matcher: Optional[Matcher[WebMethod]] = None,
-                     url_matcher: Optional[StringMatcher] = None):
+                     method_matcher: Optional[Matcher[WebMethod]],
+                     url_matcher: Optional[StringMatcher]):
             self._mock_client: MockWebClient = mock_client
             self._method_matcher: Optional[Matcher[WebMethod]] = method_matcher
             self._url_matcher: Optional[StringMatcher] = url_matcher
             self._parameter_matchers: List[DictMatcher[str, str]] = []
+            self._authentication_matcher: Optional[TupleMatcher[str, str]] = None
+            self._body_matcher: Optional[StringMatcher] = None
             self._header_matchers: List[DictMatcher[str, List[str]]] = []
 
-        def has_parameter(self,
-                          parameter_matcher: DictMatcher[str, str]) -> "MockWebClient.UrlParametersMatcherBuilder":
-            self._parameter_matchers.append(parameter_matcher)
+        def has_parameter(self, matcher: DictMatcher[str, str]) -> "MockWebClient.RuleBuilderStep3":
+            self._parameter_matchers.append(matcher)
             return self
 
-        def has_header(self,
-                       header_matcher: DictMatcher[str, List[str]]) -> "MockWebClient.UrlParametersMatcherBuilder":
-            self._header_matchers.append(header_matcher)
+        def has_authentication(self, matcher: Optional[TupleMatcher[str, str]]) -> "MockWebClient.RuleBuilderStep3":
+            self._authentication_matcher = matcher
             return self
 
-        def has_body(self, body_matcher: StringMatcher) -> "MockWebClient.FinalBuilder":
-            return MockWebClient.FinalBuilder(
-                self._mock_client,
+        def has_body(self, matcher: Optional[StringMatcher]) -> "MockWebClient.RuleBuilderStep3":
+            self._body_matcher = matcher
+            return self
+
+        def has_header(self, matcher: DictMatcher[str, List[str]]) -> "MockWebClient.RuleBuilderStep3":
+            self._header_matchers.append(matcher)
+            return self
+
+        def then_return(self, response: WebResponse) -> None:
+            matcher: MockWebRequestInvocationMatcher = MockWebRequestInvocationMatcher(
                 self._method_matcher,
                 self._url_matcher,
                 self._parameter_matchers,
-                body_matcher
-            )
-
-        def then_respond(self, response: WebResponse) -> None:
-            invocation_matcher: MockWebRequestInvocationMatcher = MockWebRequestInvocationMatcher(
-                self._method_matcher,
-                self._url_matcher,
-                self._parameter_matchers,
-                StringMatcher.any(),
-                self._header_matchers
-            )
-            rule: MockWebRequestRule = MockWebRequestRule(invocation_matcher, response)
-
-            self._mock_client._mock_rules.append(rule)
-
-    class FinalBuilder:
-        def __init__(self,
-                     mock_client: "MockWebClient",
-                     method_matcher: Optional[Matcher[WebMethod]] = None,
-                     url_matcher: Optional[StringMatcher] = None,
-                     parameter_matchers: Optional[List[DictMatcher[str, str]]] = None,
-                     body_matcher: Optional[StringMatcher] = None,
-                     header_matchers: Optional[List[DictMatcher[str, List[str]]]] = None):
-            self._mock_client: MockWebClient = mock_client
-            self._method_matcher: Optional[Matcher[WebMethod]] = method_matcher
-            self._url_matcher: Optional[StringMatcher] = url_matcher
-            self._parameter_matchers: List[DictMatcher[str, str]] = parameter_matchers
-            self._body_matcher: Optional[StringMatcher] = body_matcher
-            self._header_matchers: Optional[List[DictMatcher[str, List[str]]]] = header_matchers
-
-        def then_respond(self, response: WebResponse) -> None:
-            invocation_matcher: MockWebRequestInvocationMatcher = MockWebRequestInvocationMatcher(
-                self._method_matcher,
-                self._url_matcher,
-                self._parameter_matchers,
+                self._authentication_matcher,
                 self._body_matcher,
                 self._header_matchers
             )
-            rule: MockWebRequestRule = MockWebRequestRule(invocation_matcher, response)
 
+            rule: MockWebRequestRule = MockWebRequestRule(matcher, response)
             self._mock_client._mock_rules.append(rule)
-
-    # endregion
