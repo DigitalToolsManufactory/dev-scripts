@@ -1,5 +1,6 @@
 from dataclasses import dataclass
-from typing import Optional, Dict, List, Tuple
+from pathlib import Path
+from typing import Optional, Dict, List, Tuple, Union
 
 from __test__.dict_matcher import DictMatcher
 from __test__.matcher import Matcher
@@ -18,6 +19,7 @@ class MockWebRequestInvocation:
     authentication: Optional[Tuple[str, str]] = None
     body: Optional[str] = None
     headers: Optional[Dict[str, List[str]]] = None
+    verify: Optional[Union[bool, Path]] = None
 
 
 @dataclass(frozen=True)
@@ -28,6 +30,7 @@ class MockWebRequestInvocationMatcher:
     authentication_matcher: Optional[TupleMatcher[str, str]] = None
     body_matcher: Optional[StringMatcher] = None
     header_matchers: Optional[List[DictMatcher[str, List[str]]]] = None
+    verify_matcher: Matcher[Union[bool, Path]] = None
 
     def matches(self, invocation: MockWebRequestInvocation) -> bool:
         result: bool = True
@@ -52,6 +55,9 @@ class MockWebRequestInvocationMatcher:
             for matcher in self.header_matchers:
                 result &= matcher.matches(invocation.headers)
 
+        if self.verify_matcher is not None:
+            result &= self.verify_matcher.matches(invocation.verify)
+
         return result
 
 
@@ -75,14 +81,16 @@ class MockWebClient(WebClient):
                 parameters: Optional[Dict[str, str]] = None,
                 authentication: Optional[Tuple[str, str]] = None,
                 body: Optional[str] = None,
-                headers: Optional[Dict[str, List[str]]] = None) -> WebResponse:
+                headers: Optional[Dict[str, List[str]]] = None,
+                verify: Optional[Union[bool, Path]] = None) -> WebResponse:
         invocation: MockWebRequestInvocation = MockWebRequestInvocation(
             method,
             url,
             parameters,
             authentication,
             body,
-            headers
+            headers,
+            verify
         )
 
         for rule in self._mock_rules:
@@ -131,6 +139,7 @@ class MockWebClient(WebClient):
             self._authentication_matcher: Optional[TupleMatcher[str, str]] = None
             self._body_matcher: Optional[StringMatcher] = None
             self._header_matchers: List[DictMatcher[str, List[str]]] = []
+            self._verify_matcher: Optional[Matcher[Union[bool, Path]]] = None
 
         def has_parameter(self, matcher: DictMatcher[str, str]) -> "MockWebClient.RuleBuilderStep3":
             self._parameter_matchers.append(matcher)
@@ -148,6 +157,10 @@ class MockWebClient(WebClient):
             self._header_matchers.append(matcher)
             return self
 
+        def has_verify(self, matcher: Matcher[Union[bool, Path]]) -> "MockWebClient.RuleBuilderStep3":
+            self._verify_matcher = matcher
+            return self
+
         def then_return(self, response: WebResponse) -> None:
             matcher: MockWebRequestInvocationMatcher = MockWebRequestInvocationMatcher(
                 self._method_matcher,
@@ -155,7 +168,8 @@ class MockWebClient(WebClient):
                 self._parameter_matchers,
                 self._authentication_matcher,
                 self._body_matcher,
-                self._header_matchers
+                self._header_matchers,
+                self._verify_matcher
             )
 
             rule: MockWebRequestRule = MockWebRequestRule(matcher, response)
