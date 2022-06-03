@@ -1,7 +1,7 @@
-import re
 from unittest import TestCase
 
-from __test__.shell.mock.mock_shell import MockShell, StringMatcher, MockShellResponse
+from __test__.shell.mock.mock_shell import MockShell, MockShellResponse
+from __test__.string_matcher import StringMatcher
 from shell.shell_response import ShellResponse
 
 

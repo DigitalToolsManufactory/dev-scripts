@@ -1,7 +1,8 @@
 from pathlib import Path
 from unittest import TestCase
 
-from __test__.shell.mock.mock_shell import MockShell, StringMatcher, MockShellResponse
+from __test__.shell.mock.mock_shell import MockShell, MockShellResponse
+from __test__.string_matcher import StringMatcher
 from __test__.type_assertions import TypeAssertions
 from development_environment.git_configuration import GitConfiguration, GitRemote
 

@@ -2,7 +2,8 @@ from pathlib import Path
 from typing import Optional
 from unittest import TestCase
 
-from __test__.shell.mock.mock_shell import MockShell, StringMatcher, MockShellResponse
+from __test__.shell.mock.mock_shell import MockShell, MockShellResponse
+from __test__.string_matcher import StringMatcher
 from shell.command.get_git_remote_head_branch import GetGitRemoteHeadBranch
 
 
