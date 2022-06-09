@@ -1,4 +1,5 @@
 from argparse import ArgumentParser
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Optional, List, Tuple
 
@@ -12,11 +13,34 @@ from utility.type_utility import get_or_else
 __DEFAULT_REMOTE_NAME: str = "origin"
 
 
+@dataclass(frozen=True)
+class CurrentLocalBranch:
+    name: str
+    remote_name: str
+    tracking_name: str
+
+
 def checkout_head_branch(repository: Path, remote_name: Optional[str] = None, shell: Optional[Shell] = None) -> None:
     dev_env: DevelopmentEnvironment = DevelopmentEnvironment.load(repository, shell)
     remote, head_branch = _get_head_branch(dev_env, remote_name)
 
-    dev_env.shell.run_or_raise("git", ["switch", "-C", head_branch, "--track", f"{remote}/{head_branch}"], dev_env.root)
+    current_branch: CurrentLocalBranch = _get_current_branch(dev_env)
+
+    if current_branch is None or current_branch.tracking_name != head_branch or current_branch.remote_name != remote:
+        # we are not on the branch that is already tracking the head branch. So we need to switch branches
+        dev_env.shell.run_or_raise("git",
+                                   [
+                                       "switch",
+                                       "-C",
+                                       head_branch,
+                                       "--track",
+                                       f"{remote}/{head_branch}"
+                                   ],
+                                   dev_env.root)
+
+    else:
+        # we are already on the correct branch. We just need to update it
+        dev_env.shell.run_or_raise("git", ["pull"], dev_env.root)
 
 
 def _get_head_branch(dev_env: DevelopmentEnvironment, remote_name: Optional[str]) -> Tuple[str, str]:
@@ -61,6 +85,45 @@ def _get_head_branch(dev_env: DevelopmentEnvironment, remote_name: Optional[str]
             return name, head_branch
 
     raise Exception(f"Unable to determine the HEAD branch for repository at '{dev_env.root.absolute()}'.")
+
+
+def _get_current_branch(dev_env: DevelopmentEnvironment) -> Optional[CurrentLocalBranch]:
+    branch_response: ShellResponse = dev_env.shell.run_or_raise("git", ["branch"], dev_env.root)
+
+    current_branch_names: List[str] = list(filter(lambda x: x.startswith("* "), branch_response.get_stdout_lines()))
+    if len(current_branch_names) != 1:
+        return None
+
+    local_branch_name: str = current_branch_names[0].removeprefix("* ")
+    tracking_branch_response: ShellResponse = dev_env.shell.run_or_raise("git",
+                                                                         [
+                                                                             "config",
+                                                                             "--get",
+                                                                             f"branch.{local_branch_name}.merge"
+                                                                         ],
+                                                                         dev_env.root)
+
+    tracking_branches: List[str] = list(filter(lambda x: len(x) > 0, tracking_branch_response.get_stdout_lines()))
+    if len(tracking_branches) != 1:
+        return None
+
+    tracking_branch_name: str = tracking_branches[0].removeprefix("refs/heads/")
+
+    tracking_remote_response: ShellResponse = dev_env.shell.run_or_raise("git",
+                                                                         [
+                                                                             "config",
+                                                                             "--get",
+                                                                             f"branch.{local_branch_name}.remote"
+                                                                         ],
+                                                                         dev_env.root)
+
+    tracking_remotes: List[str] = list(filter(lambda x: len(x) > 0, tracking_remote_response.get_stdout_lines()))
+    if len(tracking_remotes) != 1:
+        return None
+
+    tracking_remote: str = tracking_remotes[0]
+
+    return CurrentLocalBranch(local_branch_name, tracking_remote, tracking_branch_name)
 
 
 def main() -> None:
