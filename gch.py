@@ -38,9 +38,7 @@ def checkout_head_branch(repository: Path, remote_name: Optional[str] = None, sh
                                    ],
                                    dev_env.root)
 
-    else:
-        # we are already on the correct branch. We just need to update it
-        dev_env.shell.run_or_raise("git", ["pull"], dev_env.root)
+    dev_env.shell.run_or_raise("git", ["pull"], dev_env.root)
 
 
 def _get_head_branch(dev_env: DevelopmentEnvironment, remote_name: Optional[str]) -> Tuple[str, str]:
