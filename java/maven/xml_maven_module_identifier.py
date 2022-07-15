@@ -33,5 +33,5 @@ class XmlMavenModuleIdentifier(MavenModuleIdentifier):
     def version_node(self) -> XmlNode:
         return self._version_node
 
-    def _set_version(self, version: str) -> None:
-        self._version_node.value = version
+    def set_version(self, version: str) -> None:
+        self._version_node.set_value(version)

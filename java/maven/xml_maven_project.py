@@ -18,11 +18,9 @@ class XmlMavenProject(MavenProject):
     PROPERTY_PATTERN: ClassVar[Pattern] = re.compile(r"^\$\{(?P<name>[^}]+)}$")
 
     def __init__(self):
-        self._xml_documents: List[XmlDocument] = []
         self._modules: List[XmlMavenModule] = []
 
     def append_module_tree(self, xml_document: XmlDocument) -> None:
-        self._xml_documents.append(xml_document)
         self._modules.append(self._read_module(xml_document))
 
     def _read_module(self, xml_document: XmlDocument, parent: Optional[XmlMavenModule] = None) -> XmlMavenModule:
@@ -33,26 +31,42 @@ class XmlMavenProject(MavenProject):
 
             return [XmlMavenProperty(node) for node in root.nodes]
 
-        def read_identifier(props: List[XmlMavenProperty]) -> XmlMavenModuleIdentifier:
+        def read_parent_identifier() -> Optional[XmlMavenModuleIdentifier]:
+            root: Optional[XmlNode] = xml_document.try_find_node("project", "parent")
+            if root is None:
+                return None
+
+            g: Optional[XmlNode] = root.try_find_node("groupId")
+            a: Optional[XmlNode] = root.try_find_node("artifactId")
+            v: Optional[XmlNode] = root.try_find_node("version")
+
+            if not all_defined(g, a, v):
+                return None
+
+            return XmlMavenModuleIdentifier(g, a, v)
+
+        def read_identifier(props: List[XmlMavenProperty],
+                            parent_id: Optional[XmlMavenModuleIdentifier]) -> XmlMavenModuleIdentifier:
             g: Optional[XmlNode] = xml_document.try_find_node("project", "groupId")
             a: Optional[XmlNode] = xml_document.try_find_node("project", "artifactId")
             v: Optional[XmlNode] = xml_document.try_find_node("project", "version")
 
             if g is None:
-                if parent is None:
+                if parent_id is None:
                     raise AssertionError("Unable to determine Maven Group Id")
 
-                g = parent.identifier.group_id_node
+                g = parent_id.group_id_node
 
             if v is None:
-                if parent is None:
+                if parent_id is None:
                     raise AssertionError("Unable to determine Maven Version")
 
-                v = parent.identifier.version_node
+                v = parent_id.version_node
 
-            g = resolve_property(g, props)
-            a = resolve_property(a, props)
-            v = resolve_property(v, props)
+            else:
+                # resolve version property in case we are NOT inheriting the parent's version
+                # this is done because using a property in a parent definition is not allowed
+                v = resolve_property(v, props)
 
             if not all_defined(g, a, v):
                 raise AssertionError("Unable to determine Maven GAV")
@@ -114,7 +128,8 @@ class XmlMavenProject(MavenProject):
             return maybe_property.node
 
         properties: List[XmlMavenProperty] = read_properties()
-        identifier: XmlMavenModuleIdentifier = read_identifier(properties)
+        parent_identifier: Optional[XmlMavenModuleIdentifier] = read_parent_identifier()
+        identifier: XmlMavenModuleIdentifier = read_identifier(properties, parent_identifier)
 
         dm_root: Optional[XmlNode] = xml_document.try_find_node("project", "dependencyManagement", "dependencies")
         d_root: Optional[XmlNode] = xml_document.try_find_node("project", "dependencies")
@@ -122,8 +137,10 @@ class XmlMavenProject(MavenProject):
         dependencies: List[XmlMavenModuleIdentifier] = read_dependencies(dm_root, properties)
         dependencies.extend(read_dependencies(d_root, properties))
 
-        module: XmlMavenModule = XmlMavenModule(identifier,
+        module: XmlMavenModule = XmlMavenModule(xml_document,
+                                                identifier,
                                                 parent=parent,
+                                                parent_identifier=parent_identifier,
                                                 properties=properties,
                                                 dependencies=dependencies)
 
@@ -135,12 +152,23 @@ class XmlMavenProject(MavenProject):
 
     @property
     def has_been_modified(self) -> bool:
-        return any(filter(lambda x: x.has_been_modified, self._xml_documents))
+        return any(filter(lambda x: x.xml_document.has_been_modified, self._collect_modules()))
 
     @property
     def modules(self) -> List[MavenModule]:
         return self._modules
 
     def save(self) -> None:
-        for doc in self._xml_documents:
-            doc.save()
+        for module in self._collect_modules():
+            module.xml_document.save()
+
+    def _collect_modules(self) -> List[XmlMavenModule]:
+        result: List[XmlMavenModule] = []
+        modules_to_check: List[XmlMavenModule] = list(self._modules)
+
+        while len(modules_to_check) > 0:
+            module: XmlMavenModule = modules_to_check.pop()
+            result.append(module)
+            modules_to_check.extend(module.modules)
+
+        return result

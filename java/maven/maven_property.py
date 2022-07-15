@@ -13,10 +13,6 @@ class MavenProperty(ABC):
     def value(self) -> str:
         raise NotImplemented
 
-    @value.setter
-    def value(self, value: str) -> None:
-        self._set_value(value)
-
     @abstractmethod
-    def _set_value(self, value: str) -> None:
+    def set_value(self, value: str) -> None:
         raise NotImplemented

@@ -2,12 +2,22 @@ import re
 from typing import Optional, ClassVar, List
 from xml.etree.ElementTree import Element
 
+from utility.type_utility import without_nones
 from utility.xml.xml_document import XmlDocument
 from utility.xml.xml_node import XmlNode
 
 
 class ETreeXmlNode(XmlNode):
-    NAME_PATTERN: ClassVar[re.Pattern] = re.compile(r"^(?P<namespace>\{[^}]+})?(?P<tag>.+)$")
+    NAME_PATTERN: ClassVar[re.Pattern] = re.compile(r"^(?:\{(?P<namespace>[^}]+)})?(?P<tag>.+)$")
+
+    @staticmethod
+    def try_create(document: XmlDocument,
+                   element: Element,
+                   parent: Optional["ETreeXmlNode"] = None) -> Optional["ETreeXmlNode"]:
+        if not isinstance(element.tag, str):
+            return None
+
+        return ETreeXmlNode(document, element, parent)
 
     def __init__(self, document: XmlDocument, element: Element, parent: Optional["ETreeXmlNode"] = None):
         self._document: XmlDocument = document
@@ -29,6 +39,10 @@ class ETreeXmlNode(XmlNode):
         return self._name
 
     @property
+    def namespace(self) -> str:
+        return self._namespace
+
+    @property
     def path(self) -> List[str]:
         result: List[str] = []
 
@@ -42,14 +56,15 @@ class ETreeXmlNode(XmlNode):
     def value(self) -> Optional[str]:
         return self._element.text
 
-    def _set_value(self, value: Optional[str]) -> None:
+    def set_value(self, value: Optional[str]) -> None:
         self._element.text = value
         self._document.mark_as_modified()
 
     @property
     def nodes(self) -> List["XmlNode"]:
         if self._nodes is None:
-            self._nodes = [ETreeXmlNode(self._document, element, self) for element in self._element]
+            self._nodes = without_nones([ETreeXmlNode.try_create(self._document, element, self)
+                                         for element in self._element])
 
         return self._nodes
 

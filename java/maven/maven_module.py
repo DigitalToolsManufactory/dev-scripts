@@ -14,6 +14,11 @@ class MavenModule(ABC):
 
     @property
     @abstractmethod
+    def parent_identifier(self) -> Optional[MavenModuleIdentifier]:
+        raise NotImplemented
+
+    @property
+    @abstractmethod
     def identifier(self) -> MavenModuleIdentifier:
         raise NotImplemented
 

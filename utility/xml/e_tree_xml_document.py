@@ -1,7 +1,7 @@
 import xml.etree.ElementTree
 from pathlib import Path
 from typing import Optional
-from xml.etree.ElementTree import ElementTree, Element
+from xml.etree.ElementTree import ElementTree, Element, XMLParser, TreeBuilder
 
 from utility.xml.e_tree_xml_node import ETreeXmlNode
 from utility.xml.xml_document import XmlDocument
@@ -12,8 +12,10 @@ class ETreeXmlDocument(XmlDocument):
 
     def __init__(self, path: Path):
         super().__init__(path)
-        self._element_tree: ElementTree = xml.etree.ElementTree.parse(self.path)
-        self._root_node: Optional[ETreeXmlDocument] = None
+
+        parser: XMLParser = XMLParser(target=TreeBuilder(insert_comments=True))
+        self._element_tree: ElementTree = xml.etree.ElementTree.parse(self.path, parser=parser)
+        self._root_node: Optional[ETreeXmlNode] = None
 
         root_element: Optional[Element] = self._element_tree.getroot()
         if root_element is not None:
@@ -32,5 +34,9 @@ class ETreeXmlDocument(XmlDocument):
         if not self.has_been_modified:
             return
 
-        self._element_tree.write(self.path)
+        ns: str = ""
+        if self._root_node is not None:
+            ns = self._root_node.namespace
+
+        self._element_tree.write(self.path, encoding="UTF-8", xml_declaration=True, default_namespace=ns)
         self._has_been_modified = False

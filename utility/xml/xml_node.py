@@ -19,12 +19,8 @@ class XmlNode(ABC):
     def value(self) -> Optional[str]:
         raise NotImplemented
 
-    @value.setter
-    def value(self, value: Optional[str]) -> None:
-        self._set_value(value)
-
     @abstractmethod
-    def _set_value(self, value: Optional[str]) -> None:
+    def set_value(self, value: Optional[str]) -> None:
         raise NotImplemented
 
     @property

@@ -15,7 +15,7 @@ class XmlMavenProperty(MavenProperty):
     def value(self) -> str:
         return self._xml_node.value
 
-    def _set_value(self, value: str) -> None:
+    def set_value(self, value: str) -> None:
         self._xml_node.value = value
 
     @property

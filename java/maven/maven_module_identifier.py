@@ -18,10 +18,6 @@ class MavenModuleIdentifier(ABC):
     def version(self) -> str:
         raise NotImplemented
 
-    @version.setter
-    def version(self, version: str) -> None:
-        self._set_version(version)
-
     @abstractmethod
-    def _set_version(self, version: str) -> None:
+    def set_version(self, version: str) -> None:
         raise NotImplemented
