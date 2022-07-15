@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project>
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>com.mycompany.app</groupId>
+        <artifactId>parent</artifactId>
+        <version>1.0.0</version>
+    </parent>
+    <artifactId>my-first-artifact-id</artifactId>
+
+    <properties>
+        <dependency.version>1.33.7</dependency.version>
+    </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>com.sample.group</groupId>
+                <artifactId>dependency</artifactId>
+                <version>${dependency.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.sample.group</groupId>
+            <artifactId>dependency-without-version</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.sample.group</groupId>
+            <artifactId>dependency-with-version</artifactId>
+            <version>0.42.0</version>
+        </dependency>
+    </dependencies>
+
+</project>

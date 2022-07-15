@@ -1,7 +1,7 @@
 from typing import List, Optional
 from unittest import TestCase
 
-from utility.type_utility import get_or_else, get_or_raise, if_not_none, without_nones
+from utility.type_utility import get_or_else, get_or_raise, if_not_none, without_nones, all_defined
 
 
 class TestTypeUtility(TestCase):
@@ -37,3 +37,7 @@ class TestTypeUtility(TestCase):
         sut: List[str] = ["foo", None, "bar", None, None, "baz"]
 
         self.assertListEqual(without_nones(sut), ["foo", "bar", "baz"])
+
+    def test_all_defined(self) -> None:
+        self.assertTrue(all_defined("foo", "bar", "baz"))
+        self.assertFalse(all_defined("foo", "bar", None))

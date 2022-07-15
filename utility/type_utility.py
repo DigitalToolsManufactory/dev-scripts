@@ -1,4 +1,4 @@
-from typing import Optional, Union, Callable, List, TypeVar
+from typing import Optional, Union, Callable, List, TypeVar, Any
 
 T = TypeVar("T")
 
@@ -35,3 +35,7 @@ def if_not_none(maybe_value: Optional[T], action: Callable[[T], None]) -> None:
 
 def without_nones(values: List[Optional[T]]) -> List[T]:
     return [value for value in values if value is not None]
+
+
+def all_defined(*values: Optional[Any]) -> bool:
+    return len(list(filter(lambda x: x is None, values))) == 0
