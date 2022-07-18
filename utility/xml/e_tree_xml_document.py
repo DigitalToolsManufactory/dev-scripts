@@ -40,3 +40,17 @@ class ETreeXmlDocument(XmlDocument):
 
         self._element_tree.write(self.path, encoding="UTF-8", xml_declaration=True, default_namespace=ns)
         self._has_been_modified = False
+
+        # workaround to enforce double quotes
+        file_content: str = ""
+        with self.path.open("r") as r:
+            for line in r:
+                if line.strip().startswith("<!--"):
+                    # don't replace quotes in XML comments
+                    file_content += line
+
+                else:
+                    file_content += line.replace("'", '"')
+
+        with self.path.open("w") as w:
+            w.write(file_content)
