@@ -1,0 +1,48 @@
+name: "Bump Maven Project Version"
+description: "Bumps the version of a (nested) Maven project."
+inputs:
+  bumpType:
+    description: "The type of version bump that should be performed."
+    required: true
+    type: choice
+    options:
+      - major
+      - minor
+      - patch
+
+  pomFiles:
+    description: "The paths (whitespace separated list) of the parent POM files that should be considered."
+    required: true
+    type: string
+    default: "pom.xml"
+
+outputs:
+  old_version:
+    description: "The old Maven version. This is defined ONLY if all projects had the exact same version."
+    value: ${{ steps.run-bump-script.outputs.old_version }}
+  new_version:
+    description: "The new Maven version. This is defined ONLY if all projects have the exact same version."
+    value: ${{ steps.run-bump-script.outputs.new_version }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Checkout Scripts
+      uses: actions/checkout@v3
+      with:
+        repository: "DigitalToolsManufactory/dev-scripts"
+        path: ".dev-scripts"
+
+    - name: Install Python 3
+      uses: actions/setup-python@v1
+      with:
+        python-version: 3.x
+
+    - name: Install Python Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r .dev-scripts/requirements.txt
+
+    - name: Run Python Script
+      id: run-bump-script
+      run: python .dev-scripts/maven_version.py bump --bump-type ${{ inputs.bumpType }} ${{ inputs.pomFiles }}

@@ -31,11 +31,16 @@ class XmlMavenProject:
             if module_id not in self._modules:
                 self._modules[module_id] = module
 
+    def get_module_versions(self) -> Dict[XmlMavenModule, str]:
+        return {module: self._resolve_version_property_node(module, module.identifier).text
+                for module in self._modules.values()}
+
     def bump_version(self,
                      bump_type: "XmlMavenProject.VersionBumpType",
                      assert_uniform_version: bool = True,
                      write_modules: bool = True) -> None:
-        current_versions: Dict[str, str] = self._collect_current_versions()
+        current_versions: Dict[str, str] = {self._module_id(module): version
+                                            for module, version in self.get_module_versions().items()}
 
         if assert_uniform_version:
             versions: Set[str] = set(current_versions.values())
