@@ -1,5 +1,5 @@
 import json
-from typing import Any, Dict, Union
+from typing import Any, Dict, Union, List
 from unittest import TestCase
 
 from varname import nameof
@@ -24,3 +24,22 @@ class TypeAssertions:
             raise TypeError(f"The given '{nameof(expected)}' must be of type str or Dict.")
 
         test.assertDictEqual(a, e)
+
+    @staticmethod
+    def contains_exactly(test: TestCase, actual: List[Any], *expected: Any) -> None:
+        TypeAssertions.contains_all(test, actual, *expected)
+        TypeAssertions.contains_all(test, list(expected), *actual)
+
+    @staticmethod
+    def contains_all(test: TestCase, actual: List[Any], *expected: Any) -> None:
+        test.assertTrue(len(actual) >= len(expected))
+
+        for e in expected:
+            found: bool = False
+
+            for a in actual:
+                if a == e:
+                    found = True
+                    break
+
+            test.assertTrue(found, f"Element {e} is not contained in {actual}.")

@@ -1,6 +1,6 @@
 from typing import Optional, Union, Callable, List, TypeVar, Any
 
-T = TypeVar("T")
+T: TypeVar = TypeVar("T")
 
 
 def get_or_else(maybe_value: Optional[T], fallback: Union[T, Callable[[], T]]) -> T:
