@@ -2,6 +2,7 @@ from argparse import ArgumentParser
 from pathlib import Path
 from typing import Any, Optional
 
+from varname import nameof
 
 from development_environment.development_environment import DevelopmentEnvironment
 from shell.shell import Shell, DefaultShell
@@ -24,7 +25,7 @@ def main() -> None:
     sub_parsers: Any = argument_parser.add_subparsers(dest="subparser")
 
     # region init command
-    init_parser: ArgumentParser = sub_parsers.add_parser("init",
+    init_parser: ArgumentParser = sub_parsers.add_parser(nameof(init),
                                                          help="Initializes a new development environment")
     init_parser.add_argument("directory",
                              type=Path)
@@ -32,7 +33,7 @@ def main() -> None:
     # endregion
 
     parsed_args: Any = argument_parser.parse_args()
-    if parsed_args.subparser == "init":
+    if parsed_args.subparser == nameof(init):
         init(parsed_args.directory)
         return
 
