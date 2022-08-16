@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import ClassVar, Optional
 
+from development_environment.formatter_configuration import FormatterConfiguration
 from development_environment.git_configuration import GitConfiguration
 from shell.shell import Shell, DefaultShell
 from utility.type_utility import get_or_else
@@ -12,6 +13,7 @@ class DevelopmentEnvironment:
     root: Path
     shell: Shell
     git_configuration: GitConfiguration
+    formatter_configuration: FormatterConfiguration
 
     ROOT_DIRECTORY: ClassVar[str] = ".dev-env"
     GIT_DIRECTORY: ClassVar[str] = ".git"
@@ -21,20 +23,21 @@ class DevelopmentEnvironment:
         root_dir.mkdir(parents=True, exist_ok=True)
 
         self.git_configuration.store(root_dir)
+        self.formatter_configuration.store(root_dir)
 
     # region load
     @staticmethod
     def load(current_directory: Path, shell: Optional[Shell] = None) -> "DevelopmentEnvironment":
         root_dir: Optional[Path] = DevelopmentEnvironment._get_root_directory(current_directory)
 
-        git_configuration: GitConfiguration = GitConfiguration() \
-            if root_dir is None \
-            else GitConfiguration.load(root_dir)
+        git_configuration: GitConfiguration = GitConfiguration.load(root_dir)
+        formatter_configuration: FormatterConfiguration = FormatterConfiguration.load(root_dir)
 
         return DevelopmentEnvironment(
-            get_or_else(root_dir, current_directory),
+            root_dir.parent if root_dir is not None else current_directory,
             get_or_else(shell, DefaultShell.new),
-            git_configuration
+            git_configuration,
+            formatter_configuration
         )
 
     @staticmethod
@@ -63,7 +66,8 @@ class DevelopmentEnvironment:
         return DevelopmentEnvironment(
             directory,
             shell,
-            GitConfiguration.infer(directory, shell)
+            GitConfiguration.infer(directory, shell),
+            FormatterConfiguration.infer(directory, shell)
         )
 
     # endregion

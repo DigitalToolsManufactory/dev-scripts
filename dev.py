@@ -9,9 +9,9 @@ from shell.shell import Shell, DefaultShell
 from utility.type_utility import get_or_else
 
 
-def init(directory: Path, shell: Optional[Shell] = None) -> DevelopmentEnvironment:
+def init(project: Path, shell: Optional[Shell] = None) -> DevelopmentEnvironment:
     shell = get_or_else(shell, DefaultShell.new)
-    dev_env: DevelopmentEnvironment = DevelopmentEnvironment.infer(directory, shell)
+    dev_env: DevelopmentEnvironment = DevelopmentEnvironment.infer(project, shell)
     dev_env.store()
 
     return dev_env
@@ -27,14 +27,14 @@ def main() -> None:
     # region init command
     init_parser: ArgumentParser = sub_parsers.add_parser(nameof(init),
                                                          help="Initializes a new development environment")
-    init_parser.add_argument("directory",
+    init_parser.add_argument("project",
                              type=Path)
 
     # endregion
 
     parsed_args: Any = argument_parser.parse_args()
     if parsed_args.subparser == nameof(init):
-        init(parsed_args.directory)
+        init(parsed_args.project)
         return
 
     argument_parser.print_help()

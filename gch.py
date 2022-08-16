@@ -20,8 +20,8 @@ class CurrentLocalBranch:
     tracking_name: str
 
 
-def checkout_head_branch(repository: Path, remote_name: Optional[str] = None, shell: Optional[Shell] = None) -> None:
-    dev_env: DevelopmentEnvironment = DevelopmentEnvironment.load(repository, shell)
+def checkout_head_branch(project: Path, remote_name: Optional[str] = None, shell: Optional[Shell] = None) -> None:
+    dev_env: DevelopmentEnvironment = DevelopmentEnvironment.load(project, shell)
     remote, head_branch = _get_head_branch(dev_env, remote_name)
 
     current_branch: CurrentLocalBranch = _get_current_branch(dev_env)
@@ -139,7 +139,7 @@ def main() -> None:
     )
 
     argument_parser.add_argument(
-        "--repository-path",
+        "--project",
         type=Path,
         required=True
     )
@@ -150,7 +150,7 @@ def main() -> None:
     )
 
     parsed_args: Any = argument_parser.parse_args()
-    checkout_head_branch(parsed_args.repository_path,
+    checkout_head_branch(parsed_args.project,
                          parsed_args.remote_name)
 
 
