@@ -1,4 +1,4 @@
-asttokens~=2.0.7
+asttokens~=2.0.8
 executing~=0.9.1
 pure-eval~=0.2.2
 six~=1.16.0
