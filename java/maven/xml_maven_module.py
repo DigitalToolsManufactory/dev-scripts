@@ -18,13 +18,15 @@ class XmlMavenModule(MavenModule):
                  identifier: XmlMavenModuleIdentifier,
                  parent_identifier: Optional[XmlMavenModuleIdentifier] = None,
                  properties: Optional[List[XmlMavenProperty]] = None,
-                 dependencies: Optional[List[XmlMavenModuleIdentifier]] = None):
+                 dependencies: Optional[List[XmlMavenModuleIdentifier]] = None,
+                 plugins: Optional[List[XmlMavenModuleIdentifier]] = None):
         self._xml_document: XmlDocument = xml_document
         self._pom_file: Path = pom_file
         self._identifier: XmlMavenModuleIdentifier = identifier
         self._parent_identifier: Optional[XmlMavenModuleIdentifier] = parent_identifier
-        self._properties: List[XmlMavenProperty] = get_or_else(properties, [])
-        self._dependencies: List[XmlMavenModuleIdentifier] = get_or_else(dependencies, [])
+        self._properties: List[XmlMavenProperty] = get_or_else(properties, list)
+        self._dependencies: List[XmlMavenModuleIdentifier] = get_or_else(dependencies, list)
+        self._plugins: List[XmlMavenModuleIdentifier] = get_or_else(plugins, list)
 
     @property
     def xml_document(self) -> XmlDocument:
@@ -45,3 +47,6 @@ class XmlMavenModule(MavenModule):
 
     def _get_dependencies(self) -> List[MavenModuleIdentifier]:
         return self._dependencies
+
+    def _get_plugins(self) -> List[MavenModuleIdentifier]:
+        return self._plugins

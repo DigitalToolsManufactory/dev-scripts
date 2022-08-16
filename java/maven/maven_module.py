@@ -39,5 +39,13 @@ class MavenModule(ABC):
     def _get_dependencies(self) -> List[MavenModuleIdentifier]:
         raise NotImplementedError
 
+    @property
+    def plugins(self) -> List[MavenModuleIdentifier]:
+        return self._get_plugins()
+
+    @abstractmethod
+    def _get_plugins(self) -> List[MavenModuleIdentifier]:
+        raise NotImplementedError
+
     def __str__(self) -> str:
         return str(self.identifier)

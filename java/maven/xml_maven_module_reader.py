@@ -23,6 +23,7 @@ class XmlMavenModuleReader(MavenModuleReader):
         parent_identifier: Optional[XmlMavenModuleIdentifier] = None
         identifier: Optional[XmlMavenModuleIdentifier] = None
         dependencies: List[XmlMavenModuleIdentifier] = field(default_factory=list)
+        plugins: List[XmlMavenModuleIdentifier] = field(default_factory=list)
 
     def read(self, pom: Path) -> XmlMavenModule:
         context: XmlMavenModuleReader.Context = self._create_context(pom)
@@ -33,13 +34,15 @@ class XmlMavenModuleReader(MavenModuleReader):
         self._read_parent_identifier(context)
         self._read_identifier(context)
         self._read_dependencies(context)
+        self._read_plugins(context)
 
         return XmlMavenModule(context.xml_document,
                               context.pom,
                               get_or_raise(context.identifier),
                               context.parent_identifier,
                               context.properties,
-                              context.dependencies)
+                              context.dependencies,
+                              context.plugins)
 
     def read_recursive(self, pom: Path) -> List[XmlMavenModule]:
         context: XmlMavenModuleReader.Context = self._create_context(pom)
@@ -133,3 +136,28 @@ class XmlMavenModuleReader(MavenModuleReader):
             return []
 
         return [Path(context.pom.parent, node.text, "pom.xml") for node in root.nodes]
+
+    def _read_plugins(self, context: "XmlMavenModuleReader.Context") -> None:
+        build_root: Optional[XmlNode] = context.xml_document.find_first_node("project", "build")
+        if build_root is None:
+            return
+
+        pl_root: Optional[XmlNode] = build_root.find_first_node("plugins")
+        if pl_root is not None:
+            for plugin_root in pl_root.nodes:
+                self._read_plugin(context, plugin_root)
+
+        plm_root: Optional[XmlNode] = build_root.find_first_node("pluginManagement", "plugins")
+        if plm_root is not None:
+            for plugin_root in plm_root.nodes:
+                self._read_plugin(context, plugin_root)
+
+    def _read_plugin(self, context: "XmlMavenModuleReader.Context", root: XmlNode) -> None:
+        g: Optional[XmlNode] = root.find_first_node("groupId")
+        a: Optional[XmlNode] = root.find_first_node("artifactId")
+        v: Optional[XmlNode] = root.find_first_node("version")
+
+        if not all_defined(g, a, v):
+            return
+
+        context.plugins.append(XmlMavenModuleIdentifier(g, a, v))
