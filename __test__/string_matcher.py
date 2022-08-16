@@ -1,6 +1,6 @@
 import re
 from dataclasses import dataclass
-from typing import Callable, Optional, Union, Pattern
+from typing import Callable, Optional, Pattern, Union
 
 
 @dataclass(frozen=True)
@@ -23,7 +23,9 @@ class StringMatcher:
             compiled_pattern: Pattern = re.compile(r"^.*" + regex.pattern + ".*$")
 
         else:
-            raise TypeError(f"The given 'regex' ('{regex}') must be either of type 'str' or 'Pattern'")
+            raise TypeError(
+                f"The given 'regex' ('{regex}') must be either of type 'str' or 'Pattern'"
+            )
 
         return StringMatcher.regex(compiled_pattern)
 
@@ -36,7 +38,9 @@ class StringMatcher:
             compiled_regex: Pattern = regex
 
         else:
-            raise TypeError(f"The given 'regex' ('{regex}') must be either of type 'str' or 'Pattern'")
+            raise TypeError(
+                f"The given 'regex' ('{regex}') must be either of type 'str' or 'Pattern'"
+            )
 
         def try_match(string: str) -> bool:
             try:

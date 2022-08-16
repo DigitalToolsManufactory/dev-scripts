@@ -8,7 +8,6 @@ from utility.xml.xml_node import XmlNode
 
 
 class ETreeXmlDocument(XmlDocument):
-
     def __init__(self, element_tree: ElementTree):
         self._delegate: ElementTree = element_tree
 
@@ -40,10 +39,9 @@ class ETreeXmlDocument(XmlDocument):
 
     def save(self, file: Path) -> None:
         namespace: str = self._get_default_namespace()
-        self._delegate.write(file,
-                             encoding="UTF-8",
-                             xml_declaration=True,
-                             default_namespace=namespace)
+        self._delegate.write(
+            file, encoding="UTF-8", xml_declaration=True, default_namespace=namespace
+        )
 
         self._replace_quotes_with_double_quotes(file)
 

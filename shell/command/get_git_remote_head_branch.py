@@ -1,7 +1,7 @@
 from pathlib import Path
-from typing import Optional, ClassVar
+from typing import ClassVar, Optional
 
-from shell.shell import Shell, DefaultShell
+from shell.shell import DefaultShell, Shell
 from shell.shell_response import ShellResponse
 from utility.type_utility import get_or_else
 
@@ -10,12 +10,14 @@ class GetGitRemoteHeadBranch:
     HEAD_BRANCH_PREFIX: ClassVar[str] = "HEAD branch: "
 
     @staticmethod
-    def run(directory: Path, remote_name: str, shell: Optional[Shell] = None) -> Optional[str]:
+    def run(
+        directory: Path, remote_name: str, shell: Optional[Shell] = None
+    ) -> Optional[str]:
         shell = get_or_else(shell, DefaultShell.new)
 
-        response: ShellResponse = shell.run("git",
-                                            ["remote", "show", remote_name],
-                                            directory)
+        response: ShellResponse = shell.run(
+            "git", ["remote", "show", remote_name], directory
+        )
 
         if not response.is_success:
             return None

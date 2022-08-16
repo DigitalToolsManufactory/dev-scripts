@@ -2,7 +2,6 @@ from abc import ABC, abstractmethod
 
 
 class MavenModuleIdentifier(ABC):
-
     @property
     def group_id(self) -> str:
         raise NotImplementedError

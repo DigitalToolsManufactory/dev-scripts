@@ -6,7 +6,6 @@ from java.maven.maven_property import MavenProperty
 
 
 class MavenModule(ABC):
-
     @property
     def identifier(self) -> MavenModuleIdentifier:
         return self._get_identifier()

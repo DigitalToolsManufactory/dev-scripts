@@ -1,5 +1,5 @@
 import re
-from re import Pattern, Match
+from re import Match, Pattern
 from typing import ClassVar, List, Optional
 from xml.etree.ElementTree import Element
 
@@ -8,7 +8,9 @@ from utility.xml.xml_node import XmlNode
 
 
 class ETreeXmlNode(XmlNode):
-    NAME_PATTERN: ClassVar[Pattern] = re.compile(r"^(?:\{(?P<namespace>[^}]+)})?(?P<tag>.+)$")
+    NAME_PATTERN: ClassVar[Pattern] = re.compile(
+        r"^(?:\{(?P<namespace>[^}]+)})?(?P<tag>.+)$"
+    )
 
     @staticmethod
     def try_create(delegate: Optional[Element]) -> Optional["ETreeXmlNode"]:
@@ -68,4 +70,3 @@ class ETreeXmlNode(XmlNode):
             result.extend(matching_node.find_all_nodes(*path_segments[1:]))
 
         return result
-

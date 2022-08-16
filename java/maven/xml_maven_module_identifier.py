@@ -3,8 +3,9 @@ from utility.xml.xml_node import XmlNode
 
 
 class XmlMavenModuleIdentifier(MavenModuleIdentifier):
-
-    def __init__(self, group_id_node: XmlNode, artifact_id_node: XmlNode, version_node: XmlNode):
+    def __init__(
+        self, group_id_node: XmlNode, artifact_id_node: XmlNode, version_node: XmlNode
+    ):
         self._group_id_node: XmlNode = group_id_node
         self._artifact_id_node: XmlNode = artifact_id_node
         self._version_node: XmlNode = version_node

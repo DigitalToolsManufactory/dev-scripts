@@ -4,10 +4,8 @@ from java.maven.maven_property import MavenProperty
 
 
 class TestMavenProperty(TestCase):
-
     def test_implement_abstract_properties(self) -> None:
         class MockMavenProperty(MavenProperty):
-
             def __init__(self, name: str, value: str):
                 self._name: str = name
                 self._value: str = value

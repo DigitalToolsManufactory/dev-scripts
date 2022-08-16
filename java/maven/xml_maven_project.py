@@ -1,7 +1,7 @@
 import re
 from enum import Enum
 from re import Match
-from typing import List, Dict, Union, cast, Pattern, ClassVar, Set
+from typing import ClassVar, Dict, List, Pattern, Set, Union, cast
 
 from java.maven.maven_module import MavenModule
 from java.maven.maven_module_identifier import MavenModuleIdentifier
@@ -14,7 +14,8 @@ from utility.xml.xml_node import XmlNode
 
 class XmlMavenProject:
     SEMANTIC_VERSION: ClassVar[Pattern] = re.compile(
-        r"^(?P<prefix>\D+)?(?P<major>\d+)\.(?P<minor>\d+)\.(?P<patch>\d+)(?P<suffix>\D.+)?$")
+        r"^(?P<prefix>\D+)?(?P<major>\d+)\.(?P<minor>\d+)\.(?P<patch>\d+)(?P<suffix>\D.+)?$"
+    )
     PROPERTY: ClassVar[Pattern] = re.compile(r"^\$\{(?P<name>[^}]+)}$")
 
     class VersionBumpType(Enum):
@@ -32,30 +33,43 @@ class XmlMavenProject:
                 self._modules[module_id] = module
 
     def get_module_versions(self) -> Dict[XmlMavenModule, str]:
-        return {module: self._resolve_version_property_node(module, module.identifier).text
-                for module in self._modules.values()}
+        return {
+            module: self._resolve_version_property_node(module, module.identifier).text
+            for module in self._modules.values()
+        }
 
-    def bump_version(self,
-                     bump_type: "XmlMavenProject.VersionBumpType",
-                     assert_uniform_version: bool = True,
-                     write_modules: bool = True) -> None:
-        current_versions: Dict[str, str] = {self._module_id(module): version
-                                            for module, version in self.get_module_versions().items()}
+    def bump_version(
+        self,
+        bump_type: "XmlMavenProject.VersionBumpType",
+        assert_uniform_version: bool = True,
+        write_modules: bool = True,
+    ) -> None:
+        current_versions: Dict[str, str] = {
+            self._module_id(module): version
+            for module, version in self.get_module_versions().items()
+        }
 
         if assert_uniform_version:
             versions: Set[str] = set(current_versions.values())
             if len(versions) != 1:
                 raise AssertionError(
-                    f"The Maven project is expected to have a uniform version, but multiple versions were found.")
+                    f"The Maven project is expected to have a uniform version, but multiple versions were found."
+                )
 
-        updated_versions: Dict[str, str] = self._bump_versions(current_versions, bump_type)
+        updated_versions: Dict[str, str] = self._bump_versions(
+            current_versions, bump_type
+        )
 
         for module in self._modules.values():
             self._set_version(module, updated_versions, write_modules)
 
     def _collect_current_versions(self) -> Dict[str, str]:
-        return {self._module_id(module): self._resolve_version_property_node(module, module.identifier).text
-                for module in self._modules.values()}
+        return {
+            self._module_id(module): self._resolve_version_property_node(
+                module, module.identifier
+            ).text
+            for module in self._modules.values()
+        }
 
     def _module_id(self, module: Union[MavenModule, MavenModuleIdentifier]) -> str:
         module_id: MavenModuleIdentifier
@@ -70,12 +84,16 @@ class XmlMavenProject:
 
         return f"{module_id.group_id}:{module_id.artifact_id}"
 
-    def _bump_versions(self, versions: Dict[str, str], bump_type: "XmlMavenProject.VersionBumpType") -> Dict[str, str]:
+    def _bump_versions(
+        self, versions: Dict[str, str], bump_type: "XmlMavenProject.VersionBumpType"
+    ) -> Dict[str, str]:
         result: Dict[str, str] = {}
         for key, value in versions.items():
             match: Match = XmlMavenProject.SEMANTIC_VERSION.match(value)
             if match is None:
-                raise AssertionError(f"Version of module '{key}' ('{value}') is not a valid semantic version.")
+                raise AssertionError(
+                    f"Version of module '{key}' ('{value}') is not a valid semantic version."
+                )
 
             major: int = int(match.group("major"))
             minor: int = int(match.group("minor"))
@@ -103,31 +121,48 @@ class XmlMavenProject:
 
         return result
 
-    def _set_version(self, module: XmlMavenModule, updated_versions: Dict[str, str], write_modules: bool) -> None:
+    def _set_version(
+        self,
+        module: XmlMavenModule,
+        updated_versions: Dict[str, str],
+        write_modules: bool,
+    ) -> None:
         if module.parent_identifier is not None:
             parent_id: str = self._module_id(module.parent_identifier)
             if parent_id in updated_versions:
-                self._resolve_version_property_node(module, module.parent_identifier).text = updated_versions[parent_id]
+                self._resolve_version_property_node(
+                    module, module.parent_identifier
+                ).text = updated_versions[parent_id]
 
         module_id: str = self._module_id(module.identifier)
         if module_id in updated_versions:
-            self._resolve_version_property_node(module, module.identifier).text = updated_versions[module_id]
+            self._resolve_version_property_node(
+                module, module.identifier
+            ).text = updated_versions[module_id]
 
         for dependency in module.dependencies:
             dependency_id: str = self._module_id(dependency)
             if dependency_id not in updated_versions:
                 continue
 
-            self._resolve_version_property_node(module, dependency).text = updated_versions[dependency_id]
+            self._resolve_version_property_node(
+                module, dependency
+            ).text = updated_versions[dependency_id]
 
         if write_modules:
             module.xml_document.save(module.pom_file)
 
-    def _resolve_version_property_node(self, module: MavenModule, module_id: MavenModuleIdentifier) -> XmlNode:
+    def _resolve_version_property_node(
+        self, module: MavenModule, module_id: MavenModuleIdentifier
+    ) -> XmlNode:
         if not isinstance(module_id, XmlMavenModuleIdentifier):
-            raise AssertionError(f"Unable to determine version XML node for module '{module.identifier}'.")
+            raise AssertionError(
+                f"Unable to determine version XML node for module '{module.identifier}'."
+            )
 
-        return self._resolve_property_node(module, cast(XmlMavenModuleIdentifier, module_id).version_node)
+        return self._resolve_property_node(
+            module, cast(XmlMavenModuleIdentifier, module_id).version_node
+        )
 
     def _resolve_property_node(self, module: MavenModule, node: XmlNode) -> XmlNode:
         match: Match = XmlMavenProject.PROPERTY.match(node.text)
@@ -142,13 +177,21 @@ class XmlMavenProject:
                 return cast(XmlMavenProperty, p).node
 
         if module.parent_identifier is None:
-            raise AssertionError(f"Unable to resolve property '{property_name}' in {module.identifier}.")
+            raise AssertionError(
+                f"Unable to resolve property '{property_name}' in {module.identifier}."
+            )
 
         parent_id: str = self._module_id(module.parent_identifier)
-        parent_modules: List[XmlMavenModule] = list(filter(lambda x: self._module_id(x.identifier) == parent_id,
-                                                           self._modules.values()))
+        parent_modules: List[XmlMavenModule] = list(
+            filter(
+                lambda x: self._module_id(x.identifier) == parent_id,
+                self._modules.values(),
+            )
+        )
 
         if len(parent_modules) != 1:
-            raise AssertionError(f"Unable to determine parent module '{parent_id}' for module {module.identifier}.")
+            raise AssertionError(
+                f"Unable to determine parent module '{parent_id}' for module {module.identifier}."
+            )
 
         return self._find_property_node(parent_modules[0], property_name)

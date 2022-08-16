@@ -13,7 +13,9 @@ class TestXmlMavenModuleReader(TestCase):
     def test_read_single_module(self) -> None:
         sut: XmlMavenModuleReader = XmlMavenModuleReader()
 
-        module: XmlMavenModule = sut.read(Path(self.RESOURCES, "single_module", "pom.xml"))
+        module: XmlMavenModule = sut.read(
+            Path(self.RESOURCES, "single_module", "pom.xml")
+        )
 
         self.assertEqual(module.identifier.group_id, "com.example")
         self.assertEqual(module.identifier.artifact_id, "application")
@@ -29,7 +31,9 @@ class TestXmlMavenModuleReader(TestCase):
     def test_read_multi_module_recursively(self) -> None:
         sut: XmlMavenModuleReader = XmlMavenModuleReader()
 
-        modules: List[XmlMavenModule] = sut.read_recursive(Path(self.RESOURCES, "multi_module", "pom.xml"))
+        modules: List[XmlMavenModule] = sut.read_recursive(
+            Path(self.RESOURCES, "multi_module", "pom.xml")
+        )
 
         self.assertEqual(len(modules), 2)
 
@@ -57,5 +61,7 @@ class TestXmlMavenModuleReader(TestCase):
 
         self.assertIsInstance(child.identifier, XmlMavenModuleIdentifier)
         self.assertIsInstance(child.parent_identifier, XmlMavenModuleIdentifier)
-        self.assertEqual(cast(XmlMavenModuleIdentifier, child.identifier).version_node,
-                         cast(XmlMavenModuleIdentifier, child.parent_identifier).version_node)
+        self.assertEqual(
+            cast(XmlMavenModuleIdentifier, child.identifier).version_node,
+            cast(XmlMavenModuleIdentifier, child.parent_identifier).version_node,
+        )

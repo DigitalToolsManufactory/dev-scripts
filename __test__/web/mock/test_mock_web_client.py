@@ -11,10 +11,9 @@ class TestMockWebClient(TestCase):
     def test_execute_any_request(self) -> None:
         mock: MockWebClient = MockWebClient()
 
-        mock.when_request()\
-            .has_method(Matcher.any())\
-            .has_url(StringMatcher.any())\
-            .then_return(WebResponse.ok("I was mocked!"))
+        mock.when_request().has_method(Matcher.any()).has_url(
+            StringMatcher.any()
+        ).then_return(WebResponse.ok("I was mocked!"))
 
         response: WebResponse = mock.execute(WebMethod.GET, "https://foo.bar")
 

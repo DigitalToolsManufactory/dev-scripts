@@ -2,7 +2,6 @@ from abc import ABC, abstractmethod
 
 
 class MavenProperty(ABC):
-
     @property
     def name(self) -> str:
         return self._get_name()

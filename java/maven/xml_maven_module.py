@@ -11,21 +11,24 @@ from utility.xml.xml_document import XmlDocument
 
 
 class XmlMavenModule(MavenModule):
-
-    def __init__(self,
-                 xml_document: XmlDocument,
-                 pom_file: Path,
-                 identifier: XmlMavenModuleIdentifier,
-                 parent_identifier: Optional[XmlMavenModuleIdentifier] = None,
-                 properties: Optional[List[XmlMavenProperty]] = None,
-                 dependencies: Optional[List[XmlMavenModuleIdentifier]] = None,
-                 plugins: Optional[List[XmlMavenModuleIdentifier]] = None):
+    def __init__(
+        self,
+        xml_document: XmlDocument,
+        pom_file: Path,
+        identifier: XmlMavenModuleIdentifier,
+        parent_identifier: Optional[XmlMavenModuleIdentifier] = None,
+        properties: Optional[List[XmlMavenProperty]] = None,
+        dependencies: Optional[List[XmlMavenModuleIdentifier]] = None,
+        plugins: Optional[List[XmlMavenModuleIdentifier]] = None,
+    ):
         self._xml_document: XmlDocument = xml_document
         self._pom_file: Path = pom_file
         self._identifier: XmlMavenModuleIdentifier = identifier
         self._parent_identifier: Optional[XmlMavenModuleIdentifier] = parent_identifier
         self._properties: List[XmlMavenProperty] = get_or_else(properties, list)
-        self._dependencies: List[XmlMavenModuleIdentifier] = get_or_else(dependencies, list)
+        self._dependencies: List[XmlMavenModuleIdentifier] = get_or_else(
+            dependencies, list
+        )
         self._plugins: List[XmlMavenModuleIdentifier] = get_or_else(plugins, list)
 
     @property

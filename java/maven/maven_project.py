@@ -5,7 +5,6 @@ from java.maven.maven_module import MavenModule
 
 
 class MavenProject(ABC):
-
     @property
     def modules(self) -> List[MavenModule]:
         return self._get_modules()

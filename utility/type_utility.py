@@ -1,4 +1,4 @@
-from typing import Optional, Union, Callable, List, TypeVar, Any
+from typing import Any, Callable, List, Optional, TypeVar, Union
 
 T = TypeVar("T")
 
@@ -13,7 +13,10 @@ def get_or_else(maybe_value: Optional[T], fallback: Union[T, Callable[[], T]]) -
     return fallback
 
 
-def get_or_raise(maybe_value: Optional[T], error: Optional[Union[Exception, Callable[[], Exception]]] = None) -> T:
+def get_or_raise(
+    maybe_value: Optional[T],
+    error: Optional[Union[Exception, Callable[[], Exception]]] = None,
+) -> T:
     if maybe_value is not None:
         return maybe_value
 

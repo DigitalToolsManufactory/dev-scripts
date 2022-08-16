@@ -38,7 +38,9 @@ class TestDevelopmentEnvironment(TestCase):
 
         self.assert_empty_git_config(sut)
 
-    def assert_filled_git_config(self, development_environment: DevelopmentEnvironment) -> None:
+    def assert_filled_git_config(
+        self, development_environment: DevelopmentEnvironment
+    ) -> None:
         sut: GitConfiguration = development_environment.git_configuration
 
         self.assertIsNotNone(sut.remotes)
@@ -48,7 +50,9 @@ class TestDevelopmentEnvironment(TestCase):
         self.assertEqual(remote.name, "origin")
         self.assertEqual(remote.head_branch, "master")
 
-    def assert_empty_git_config(self, development_environment: DevelopmentEnvironment) -> None:
+    def assert_empty_git_config(
+        self, development_environment: DevelopmentEnvironment
+    ) -> None:
         sut: GitConfiguration = development_environment.git_configuration
 
         self.assertIsNone(sut.remotes)
