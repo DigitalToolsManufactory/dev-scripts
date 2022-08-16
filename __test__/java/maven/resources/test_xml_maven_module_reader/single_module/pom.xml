@@ -43,4 +43,35 @@
         </dependency>
     </dependencies>
 
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>com.example</groupId>
+                    <artifactId>plm-with-version</artifactId>
+                    <version>1.33.7</version>
+                </plugin>
+                <plugin>
+                    <groupId>com.example</groupId>
+                    <artifactId>plm-without-version</artifactId>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+        <plugins>
+            <plugin>
+                <groupId>com.example</groupId>
+                <artifactId>plm-with-version</artifactId>
+            </plugin>
+            <plugin>
+                <groupId>com.example</groupId>
+                <artifactId>pl-with-version</artifactId>
+                <version>7.33.1</version>
+            </plugin>
+            <plugin>
+                <groupId>com.example</groupId>
+                <artifactId>pl-without-version</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+
 </project>

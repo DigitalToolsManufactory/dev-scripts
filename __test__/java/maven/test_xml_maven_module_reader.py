@@ -20,6 +20,7 @@ class TestXmlMavenModuleReader(TestCase):
         self.assertEqual(module.identifier.version, "13.3.7")
         self.assertEqual(len(module.properties), 1)
         self.assertEqual(len(module.dependencies), 2)
+        self.assertEqual(len(module.plugins), 2)
         self.assertIsNotNone(module.parent_identifier)
         self.assertEqual(module.parent_identifier.group_id, "com.example")
         self.assertEqual(module.parent_identifier.artifact_id, "parent")
