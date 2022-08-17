@@ -61,6 +61,9 @@ def _get_maven_modules_arguments(dev_env: DevelopmentEnvironment,
     for name in module_names:
         result.extend(["-pl", name])
 
+    for exclusion in set(formatter_configuration.excluded_modules):
+        result.extend(["-pl", f"!{exclusion}"])
+
     return result
 
 
