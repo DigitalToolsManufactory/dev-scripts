@@ -1,12 +1,11 @@
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Optional, List
+from typing import List, Optional
 
 from utility.xml.xml_node import XmlNode
 
 
 class XmlDocument(ABC):
-
     @abstractmethod
     def find_first_node(self, *path_segments: str) -> Optional[XmlNode]:
         raise NotImplementedError

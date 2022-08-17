@@ -39,22 +39,26 @@ class TestGitConfiguration(TestCase):
 
         actual: str = sut.to_json()
 
-        TypeAssertions.json_equals(self, actual, '{"remotes": [{"name": "origin", "head_branch": "main"}]}')
+        TypeAssertions.json_equals(
+            self, actual, '{"remotes": [{"name": "origin", "head_branch": "main"}]}'
+        )
 
     def test_infer_success(self) -> None:
         mock: MockShell = MockShell()
 
-        mock.when_command(StringMatcher.exact("git")) \
-            .has_argument(StringMatcher.exact("fetch --all")) \
-            .then_return(MockShellResponse.of_success(""))
+        mock.when_command(StringMatcher.exact("git")).has_argument(
+            StringMatcher.exact("fetch --all")
+        ).then_return(MockShellResponse.of_success(""))
 
-        mock.when_command(StringMatcher.exact("git")) \
-            .has_argument(StringMatcher.exact("remote")) \
-            .then_return(MockShellResponse.of_success("origin\nfork"))
+        mock.when_command(StringMatcher.exact("git")).has_argument(
+            StringMatcher.exact("remote")
+        ).then_return(MockShellResponse.of_success("origin\nfork"))
 
-        mock.when_command(StringMatcher.exact("git")) \
-            .has_argument(StringMatcher.exact("remote show origin")) \
-            .then_return(MockShellResponse.of_success(""" 
+        mock.when_command(StringMatcher.exact("git")).has_argument(
+            StringMatcher.exact("remote show origin")
+        ).then_return(
+            MockShellResponse.of_success(
+                """ 
             * remote origin 
               Fetch URL: https://github.com/octocat/Hello-World.git
               Push  URL: https://github.com/octocat/Hello-World.git
@@ -65,11 +69,15 @@ class TestGitConfiguration(TestCase):
                 origin-main merges with remote origin-main
               Local ref configured for 'git push':
                 origin-main pushes to origin-main (up to date)
-            """))
+            """
+            )
+        )
 
-        mock.when_command(StringMatcher.exact("git")) \
-            .has_argument(StringMatcher.exact("remote show fork")) \
-            .then_return(MockShellResponse.of_success(""" 
+        mock.when_command(StringMatcher.exact("git")).has_argument(
+            StringMatcher.exact("remote show fork")
+        ).then_return(
+            MockShellResponse.of_success(
+                """ 
             * remote fork 
               Fetch URL: https://github.com/fork/Hello-World.git
               Push  URL: https://github.com/fork/Hello-World.git
@@ -80,7 +88,9 @@ class TestGitConfiguration(TestCase):
                 fork-main merges with remote fork-main
               Local ref configured for 'git push':
                 fork-main pushes to fork-main (up to date)
-            """))
+            """
+            )
+        )
 
         sut: GitConfiguration = GitConfiguration.infer(Path("."), mock)
 
@@ -97,7 +107,9 @@ class TestGitConfiguration(TestCase):
     def test_infer_failure(self) -> None:
         mock: MockShell = MockShell()
 
-        mock.when_command(StringMatcher.any()).then_return(MockShellResponse.of_error(""))
+        mock.when_command(StringMatcher.any()).then_return(
+            MockShellResponse.of_error("")
+        )
 
         sut: GitConfiguration = GitConfiguration.infer(Path("."), mock)
 

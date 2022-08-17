@@ -5,10 +5,8 @@ from utility.xml.xml_node import XmlNode
 
 
 class TestXmlNode(TestCase):
-
     def test_abstract_property(self) -> None:
         class MockXmlNode(XmlNode):
-
             def __init__(self, name: str, text: str):
                 self._name: str = name
                 self._text: str = text

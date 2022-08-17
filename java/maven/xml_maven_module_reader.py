@@ -2,7 +2,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import List, Optional
 from xml.etree import ElementTree
-from xml.etree.ElementTree import XMLParser, TreeBuilder
+from xml.etree.ElementTree import TreeBuilder, XMLParser
 
 from java.maven.maven_module_reader import MavenModuleReader
 from java.maven.xml_maven_module import XmlMavenModule
@@ -36,19 +36,23 @@ class XmlMavenModuleReader(MavenModuleReader):
         self._read_dependencies(context)
         self._read_plugins(context)
 
-        return XmlMavenModule(context.xml_document,
-                              context.pom,
-                              get_or_raise(context.identifier),
-                              context.parent_identifier,
-                              context.properties,
-                              context.dependencies,
-                              context.plugins)
+        return XmlMavenModule(
+            context.xml_document,
+            context.pom,
+            get_or_raise(context.identifier),
+            context.parent_identifier,
+            context.properties,
+            context.dependencies,
+            context.plugins,
+        )
 
     def read_recursive(self, pom: Path) -> List[XmlMavenModule]:
         context: XmlMavenModuleReader.Context = self._create_context(pom)
         return self._read_recursive(context)
 
-    def _read_recursive(self, context: "XmlMavenModuleReader.Context") -> List[XmlMavenModule]:
+    def _read_recursive(
+        self, context: "XmlMavenModuleReader.Context"
+    ) -> List[XmlMavenModule]:
         result: List[XmlMavenModule] = [self._read(context)]
 
         for pom_path in self._read_modules(context):
@@ -64,14 +68,18 @@ class XmlMavenModuleReader(MavenModuleReader):
         return XmlMavenModuleReader.Context(pom, xml_document)
 
     def _read_properties(self, context: "XmlMavenModuleReader.Context") -> None:
-        root: Optional[XmlNode] = context.xml_document.find_first_node("project", "properties")
+        root: Optional[XmlNode] = context.xml_document.find_first_node(
+            "project", "properties"
+        )
         if root is None:
             return
 
         context.properties = [XmlMavenProperty(node) for node in root.nodes]
 
     def _read_parent_identifier(self, context: "XmlMavenModuleReader.Context") -> None:
-        root: Optional[XmlNode] = context.xml_document.find_first_node("project", "parent")
+        root: Optional[XmlNode] = context.xml_document.find_first_node(
+            "project", "parent"
+        )
         if root is None:
             return
 
@@ -80,47 +88,64 @@ class XmlMavenModuleReader(MavenModuleReader):
         v: Optional[XmlNode] = root.find_first_node("version")
 
         if not all_defined(g, a, v):
-            raise AssertionError(f"Unable to determine parent module from '{context.pom.resolve().absolute()}'.")
+            raise AssertionError(
+                f"Unable to determine parent module from '{context.pom.resolve().absolute()}'."
+            )
 
         context.parent_identifier = XmlMavenModuleIdentifier(g, a, v)
 
     def _read_identifier(self, context: "XmlMavenModuleReader.Context") -> None:
-        g: Optional[XmlNode] = context.xml_document.find_first_node("project", "groupId")
-        a: Optional[XmlNode] = context.xml_document.find_first_node("project", "artifactId")
-        v: Optional[XmlNode] = context.xml_document.find_first_node("project", "version")
+        g: Optional[XmlNode] = context.xml_document.find_first_node(
+            "project", "groupId"
+        )
+        a: Optional[XmlNode] = context.xml_document.find_first_node(
+            "project", "artifactId"
+        )
+        v: Optional[XmlNode] = context.xml_document.find_first_node(
+            "project", "version"
+        )
 
         if g is None:
             if context.parent_identifier is None:
-                raise AssertionError(f"Unable to determine Maven Group Id from '{context.pom.resolve().absolute()}'.")
+                raise AssertionError(
+                    f"Unable to determine Maven Group Id from '{context.pom.resolve().absolute()}'."
+                )
 
             g = context.parent_identifier.group_id_node
 
         if v is None:
             if context.parent_identifier is None:
-                raise AssertionError(f"Unable to determine Maven Version from '{context.pom.resolve().absolute()}'.")
+                raise AssertionError(
+                    f"Unable to determine Maven Version from '{context.pom.resolve().absolute()}'."
+                )
 
             v = context.parent_identifier.version_node
 
         if not all_defined(g, a, v):
             raise AssertionError(
-                f"Unable to determine Maven identifier (GAV) from '{context.pom.resolve().absolute()}'.")
+                f"Unable to determine Maven identifier (GAV) from '{context.pom.resolve().absolute()}'."
+            )
 
         context.identifier = XmlMavenModuleIdentifier(g, a, v)
 
     def _read_dependencies(self, context: "XmlMavenModuleReader.Context") -> None:
-        dp_root: Optional[XmlNode] = context.xml_document.find_first_node("project", "dependencies")
+        dp_root: Optional[XmlNode] = context.xml_document.find_first_node(
+            "project", "dependencies"
+        )
         if dp_root is not None:
             for dependency_root in dp_root.nodes:
                 self._read_dependency(context, dependency_root)
 
-        dpm_root: Optional[XmlNode] = context.xml_document.find_first_node("project",
-                                                                           "dependencyManagement",
-                                                                           "dependencies")
+        dpm_root: Optional[XmlNode] = context.xml_document.find_first_node(
+            "project", "dependencyManagement", "dependencies"
+        )
         if dpm_root is not None:
             for dependency_root in dpm_root.nodes:
                 self._read_dependency(context, dependency_root)
 
-    def _read_dependency(self, context: "XmlMavenModuleReader.Context", root: XmlNode) -> None:
+    def _read_dependency(
+        self, context: "XmlMavenModuleReader.Context", root: XmlNode
+    ) -> None:
         g: Optional[XmlNode] = root.find_first_node("groupId")
         a: Optional[XmlNode] = root.find_first_node("artifactId")
         v: Optional[XmlNode] = root.find_first_node("version")
@@ -131,14 +156,18 @@ class XmlMavenModuleReader(MavenModuleReader):
         context.dependencies.append(XmlMavenModuleIdentifier(g, a, v))
 
     def _read_modules(self, context: "XmlMavenModuleReader.Context") -> List[Path]:
-        root: Optional[XmlNode] = context.xml_document.find_first_node("project", "modules")
+        root: Optional[XmlNode] = context.xml_document.find_first_node(
+            "project", "modules"
+        )
         if root is None:
             return []
 
         return [Path(context.pom.parent, node.text, "pom.xml") for node in root.nodes]
 
     def _read_plugins(self, context: "XmlMavenModuleReader.Context") -> None:
-        build_root: Optional[XmlNode] = context.xml_document.find_first_node("project", "build")
+        build_root: Optional[XmlNode] = context.xml_document.find_first_node(
+            "project", "build"
+        )
         if build_root is None:
             return
 
@@ -147,12 +176,16 @@ class XmlMavenModuleReader(MavenModuleReader):
             for plugin_root in pl_root.nodes:
                 self._read_plugin(context, plugin_root)
 
-        plm_root: Optional[XmlNode] = build_root.find_first_node("pluginManagement", "plugins")
+        plm_root: Optional[XmlNode] = build_root.find_first_node(
+            "pluginManagement", "plugins"
+        )
         if plm_root is not None:
             for plugin_root in plm_root.nodes:
                 self._read_plugin(context, plugin_root)
 
-    def _read_plugin(self, context: "XmlMavenModuleReader.Context", root: XmlNode) -> None:
+    def _read_plugin(
+        self, context: "XmlMavenModuleReader.Context", root: XmlNode
+    ) -> None:
         g: Optional[XmlNode] = root.find_first_node("groupId")
         a: Optional[XmlNode] = root.find_first_node("artifactId")
         v: Optional[XmlNode] = root.find_first_node("version")

@@ -1,13 +1,12 @@
 from typing import Optional
 from unittest import TestCase
-from xml.etree.ElementTree import ElementTree, Element
+from xml.etree.ElementTree import Element, ElementTree
 
 from utility.xml.e_tree_xml_document import ETreeXmlDocument
 from utility.xml.xml_node import XmlNode
 
 
 class TestETreeXmlDocument(TestCase):
-
     def test_find_root_node(self) -> None:
         root_element: Element = Element("{root-namespace}root-node")
         tree: ElementTree = ElementTree(root_element)

@@ -3,7 +3,6 @@ from utility.xml.xml_node import XmlNode
 
 
 class XmlMavenProperty(MavenProperty):
-
     def __init__(self, node: XmlNode):
         self._delegate: XmlNode = node
 

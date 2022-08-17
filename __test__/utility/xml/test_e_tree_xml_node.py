@@ -1,4 +1,4 @@
-from typing import Optional, List
+from typing import List, Optional
 from unittest import TestCase
 from xml.etree.ElementTree import Element
 
@@ -7,7 +7,6 @@ from utility.xml.xml_node import XmlNode
 
 
 class TestETreeXmlNode(TestCase):
-
     def test_get_name(self) -> None:
         element: Element = Element("{namespace}name")
         sut: ETreeXmlNode = ETreeXmlNode(element)

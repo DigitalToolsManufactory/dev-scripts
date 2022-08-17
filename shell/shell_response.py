@@ -31,14 +31,18 @@ class ShellResponse:
         return result
 
     @staticmethod
-    def from_process(process: Popen, stdout: Union[str, List[str]], stderr: Union[str, List[str]]) -> "ShellResponse":
+    def from_process(
+        process: Popen, stdout: Union[str, List[str]], stderr: Union[str, List[str]]
+    ) -> "ShellResponse":
         actual_stdout: str = stdout if isinstance(stdout, str) else "\n".join(stdout)
         actual_stderr: str = stderr if isinstance(stderr, str) else "\n".join(stderr)
 
-        return ShellResponse(ShellResponse._assemble_command_line(process),
-                             process.returncode,
-                             actual_stdout,
-                             actual_stderr)
+        return ShellResponse(
+            ShellResponse._assemble_command_line(process),
+            process.returncode,
+            actual_stdout,
+            actual_stderr,
+        )
 
     @staticmethod
     def _assemble_command_line(process: Popen) -> str:
@@ -52,7 +56,7 @@ class ShellResponse:
             command_line_argument: str = argument
 
             if " " in command_line_argument:
-                command_line_argument = f"\"{command_line_argument}\""
+                command_line_argument = f'"{command_line_argument}"'
 
             arguments.append(command_line_argument)
 

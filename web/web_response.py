@@ -1,6 +1,6 @@
 import json
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Any
+from typing import Any, Dict, List, Optional
 
 from utility.type_utility import get_or_else
 
@@ -22,25 +22,19 @@ class WebResponse:
             return None
 
     @staticmethod
-    def ok(body: Optional[str] = None, headers: Optional[Dict[str, List[str]]] = None) -> "WebResponse":
-        return WebResponse(
-            200,
-            get_or_else(body, ""),
-            get_or_else(headers, {})
-        )
+    def ok(
+        body: Optional[str] = None, headers: Optional[Dict[str, List[str]]] = None
+    ) -> "WebResponse":
+        return WebResponse(200, get_or_else(body, ""), get_or_else(headers, {}))
 
     @staticmethod
-    def client_error(body: Optional[str] = None, headers: Optional[Dict[str, List[str]]] = None) -> "WebResponse":
-        return WebResponse(
-            400,
-            get_or_else(body, ""),
-            get_or_else(headers, {})
-        )
+    def client_error(
+        body: Optional[str] = None, headers: Optional[Dict[str, List[str]]] = None
+    ) -> "WebResponse":
+        return WebResponse(400, get_or_else(body, ""), get_or_else(headers, {}))
 
     @staticmethod
-    def server_error(body: Optional[str] = None, headers: Optional[Dict[str, List[str]]] = None) -> "WebResponse":
-        return WebResponse(
-            500,
-            get_or_else(body, ""),
-            get_or_else(headers, {})
-        )
+    def server_error(
+        body: Optional[str] = None, headers: Optional[Dict[str, List[str]]] = None
+    ) -> "WebResponse":
+        return WebResponse(500, get_or_else(body, ""), get_or_else(headers, {}))

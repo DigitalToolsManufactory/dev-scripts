@@ -1,12 +1,12 @@
 import json
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional, Dict, Any, Union, ClassVar, List
+from typing import Any, ClassVar, Dict, List, Optional, Union
 
 from varname import nameof
 
 from shell.command.get_git_remote_head_branch import GetGitRemoteHeadBranch
-from shell.shell import Shell, DefaultShell
+from shell.shell import DefaultShell, Shell
 from shell.shell_response import ShellResponse
 from utility.type_utility import get_or_else
 
@@ -37,7 +37,9 @@ class GitConfiguration:
 
     def to_dict(self) -> Dict[str, Any]:
         return {
-            nameof(GitConfiguration.remotes): [remote.to_dict() for remote in self.remotes]
+            nameof(GitConfiguration.remotes): [
+                remote.to_dict() for remote in self.remotes
+            ]
         }
 
     # endregion
@@ -63,7 +65,9 @@ class GitConfiguration:
             data: Dict[str, Any] = content
 
         else:
-            raise TypeError(f"The given 'content' ({content}) must be of type 'str' or 'dict'")
+            raise TypeError(
+                f"The given 'content' ({content}) must be of type 'str' or 'dict'"
+            )
 
         remotes: Optional[List[GitRemote]] = None
         if nameof(GitConfiguration.remotes) in data:
@@ -79,16 +83,22 @@ class GitConfiguration:
     @staticmethod
     def infer(directory: Path, shell: Optional[Shell] = None) -> "GitConfiguration":
         shell = get_or_else(shell, DefaultShell.new)
-        git_fetch_response: ShellResponse = shell.run("git", ["fetch", "--all"], directory)
+        git_fetch_response: ShellResponse = shell.run(
+            "git", ["fetch", "--all"], directory
+        )
 
         if not git_fetch_response.is_success:
             # project does not use git
             return GitConfiguration()
 
-        git_remote_response: ShellResponse = shell.run_or_raise("git", ["remote"], directory)
+        git_remote_response: ShellResponse = shell.run_or_raise(
+            "git", ["remote"], directory
+        )
         git_remotes: List[GitRemote] = []
         for remote_name in git_remote_response.get_stdout_lines():
-            head_branch: Optional[str] = GetGitRemoteHeadBranch.run(directory, remote_name, shell)
+            head_branch: Optional[str] = GetGitRemoteHeadBranch.run(
+                directory, remote_name, shell
+            )
             git_remotes.append(GitRemote(remote_name, head_branch))
 
         return GitConfiguration(git_remotes)
