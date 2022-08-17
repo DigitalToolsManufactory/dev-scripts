@@ -1,5 +1,7 @@
+import re
 from argparse import ArgumentParser
 from pathlib import Path
+from re import Pattern
 from typing import Any, List, Optional, Set, cast
 
 from development_environment.development_environment import DevelopmentEnvironment
@@ -95,46 +97,80 @@ def _is_relevant_for_maven_formatting(file: Path) -> bool:
 
 
 # region Venv
-
-
 def _format_venv_project(dev_env: DevelopmentEnvironment) -> None:
     config: VenvFormatterConfiguration = cast(
         VenvFormatterConfiguration, dev_env.formatter_configuration
     )
-    arguments: Optional[List[str]] = _get_venv_python_arguments(dev_env, config)
+    arguments: Optional[List[List[str]]] = _get_venv_python_arguments(dev_env, config)
     if arguments is None:
         return
 
-    dev_env.shell.run_or_raise("python", ["-m"] + arguments, dev_env.root)
+    python_executable: Optional[Path] = _find_venv_python_executable(dev_env)
+    if python_executable is None:
+        print(f"Unable to find python executable for VENV project in '{dev_env.root.resolve().absolute()}'")
+        return
+
+    for argument_list in arguments:
+        dev_env.shell.run_or_raise(
+            str(python_executable), ["-m"] + argument_list, dev_env.root
+        )
 
 
 def _get_venv_python_arguments(
     dev_env: DevelopmentEnvironment, formatter_configuration: VenvFormatterConfiguration
-) -> Optional[List[str]]:
+) -> Optional[List[List[str]]]:
     if len(formatter_configuration.goals) < 1:
         return None
 
     files_to_format: List[Path] = get_or_else(_get_files_to_format(dev_env), list)
     files_to_format = list(filter(_is_relevant_for_venv_formatting, files_to_format))
-    result: List[str] = []
+    result: List[List[str]] = []
     for goal in formatter_configuration.goals:
-        result.extend([g.strip() for g in goal.split(" ")])
+        arguments: List[str] = [g.strip() for g in goal.split(" ")]
 
         if len(files_to_format) < 1:
-            result.append(
+            arguments.append(
                 str(dev_env.root.resolve().absolute())
             )  # format the entire project
 
         else:
-            result.extend([str(f.resolve().absolute()) for f in files_to_format])
+            arguments.extend([str(f.resolve().absolute()) for f in files_to_format])
 
-        result.append(";")  # concat the command to allow for multiple goals
+        result.append(arguments)
 
     return result
 
 
 def _is_relevant_for_venv_formatting(file: Path) -> bool:
     return file.suffix == ".py"
+
+
+def _find_venv_python_executable(dev_env: DevelopmentEnvironment) -> Optional[Path]:
+    venv_pattern: Pattern = re.compile(r"^.*venv.*", re.RegexFlag.IGNORECASE)
+    scripts_pattern: Pattern = re.compile("^scripts$", re.RegexFlag.IGNORECASE)
+
+    for venv_dir in dev_env.root.iterdir():
+        if not venv_dir.is_dir():
+            continue
+
+        if venv_pattern.match(venv_dir.name) is None:
+            continue
+
+        for scripts_dir in venv_dir.iterdir():
+            if not scripts_dir.is_dir():
+                continue
+
+            if scripts_pattern.match(scripts_dir.name) is None:
+                continue
+
+            for python_file in scripts_dir.iterdir():
+                if not python_file.is_file():
+                    continue
+
+                if python_file.stem.lower() == "python":
+                    return python_file.resolve().absolute()
+
+    return None
 
 
 # endregion
