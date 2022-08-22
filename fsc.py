@@ -107,7 +107,9 @@ def _format_venv_project(dev_env: DevelopmentEnvironment) -> None:
 
     python_executable: Optional[Path] = _find_venv_python_executable(dev_env)
     if python_executable is None:
-        print(f"Unable to find python executable for VENV project in '{dev_env.root.resolve().absolute()}'")
+        print(
+            f"Unable to find python executable for VENV project in '{dev_env.root.resolve().absolute()}'"
+        )
         return
 
     for argument_list in arguments:
