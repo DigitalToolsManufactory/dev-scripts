@@ -34,3 +34,13 @@ function fsc()
 
     Invoke-Expression "deactivate" > $null
 }
+
+function gpu()
+{
+    Invoke-Expression "$__scripts_path/.venv/Scripts/activate.ps1" > $null
+
+    $current_dir = _current_dir
+    Invoke-Expression "python $__scripts_path/gpu.py --project $current_dir $args" > $null
+
+    Invoke-Expression "deactivate" > $null
+}

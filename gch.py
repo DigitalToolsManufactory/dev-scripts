@@ -1,5 +1,4 @@
 from argparse import ArgumentParser
-from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, List, Optional, Tuple
 
@@ -8,16 +7,9 @@ from development_environment.git_configuration import GitRemote
 from shell.command.get_git_remote_head_branch import GetGitRemoteHeadBranch
 from shell.shell import Shell
 from shell.shell_response import ShellResponse
+from utility import git_utility
+from utility.git_utility import CurrentLocalBranch
 from utility.type_utility import get_or_else
-
-__DEFAULT_REMOTE_NAME: str = "origin"
-
-
-@dataclass(frozen=True)
-class CurrentLocalBranch:
-    name: str
-    remote_name: str
-    tracking_name: str
 
 
 def checkout_head_branch(
@@ -26,7 +18,9 @@ def checkout_head_branch(
     dev_env: DevelopmentEnvironment = DevelopmentEnvironment.load(project, shell)
     remote, head_branch = _get_head_branch(dev_env, remote_name)
 
-    current_branch: CurrentLocalBranch = _get_current_branch(dev_env)
+    current_branch: Optional[CurrentLocalBranch] = git_utility.get_current_local_branch(
+        dev_env
+    )
 
     if (
         current_branch is None
@@ -47,7 +41,7 @@ def _get_head_branch(
     dev_env: DevelopmentEnvironment, remote_name: Optional[str]
 ) -> Tuple[str, str]:
     dev_env_remotes: List[GitRemote] = get_or_else(
-        dev_env.git_configuration.remotes, []
+        dev_env.git_configuration.remotes, list
     )
 
     # Option 1: Search for a pre-configured head branch in the dev-env
@@ -83,13 +77,13 @@ def _get_head_branch(
 
     # Option 3 (A): The list of remotes contains the default remote name
     # --> assume the user wants to use this remote
-    if __DEFAULT_REMOTE_NAME in remote_names:
+    if git_utility.DEFAULT_REMOTE_NAME in remote_names:
         head_branch: Optional[str] = GetGitRemoteHeadBranch.run(
-            dev_env.root, __DEFAULT_REMOTE_NAME, dev_env.shell
+            dev_env.root, git_utility.DEFAULT_REMOTE_NAME, dev_env.shell
         )
 
         if head_branch is not None:
-            return __DEFAULT_REMOTE_NAME, head_branch
+            return git_utility.DEFAULT_REMOTE_NAME, head_branch
 
     # Option 3 (B): The list of remotes does NOT contain the default remote name
     # --> loop through all existing remotes until we find a head branch
@@ -104,54 +98,6 @@ def _get_head_branch(
     raise Exception(
         f"Unable to determine the HEAD branch for repository at '{dev_env.root.absolute()}'."
     )
-
-
-def _get_current_branch(
-    dev_env: DevelopmentEnvironment,
-) -> Optional[CurrentLocalBranch]:
-    branch_response: ShellResponse = dev_env.shell.run("git", ["branch"], dev_env.root)
-
-    if not branch_response.is_success:
-        return None
-
-    current_branch_names: List[str] = list(
-        filter(lambda x: x.startswith("* "), branch_response.get_stdout_lines())
-    )
-    if len(current_branch_names) != 1:
-        return None
-
-    local_branch_name: str = current_branch_names[0].removeprefix("* ")
-    tracking_branch_response: ShellResponse = dev_env.shell.run(
-        "git", ["config", "--get", f"branch.{local_branch_name}.merge"], dev_env.root
-    )
-
-    if not tracking_branch_response.is_success:
-        return None
-
-    tracking_branches: List[str] = list(
-        filter(lambda x: len(x) > 0, tracking_branch_response.get_stdout_lines())
-    )
-    if len(tracking_branches) != 1:
-        return None
-
-    tracking_branch_name: str = tracking_branches[0].removeprefix("refs/heads/")
-
-    tracking_remote_response: ShellResponse = dev_env.shell.run(
-        "git", ["config", "--get", f"branch.{local_branch_name}.remote"], dev_env.root
-    )
-
-    if not tracking_remote_response.is_success:
-        return None
-
-    tracking_remotes: List[str] = list(
-        filter(lambda x: len(x) > 0, tracking_remote_response.get_stdout_lines())
-    )
-    if len(tracking_remotes) != 1:
-        return None
-
-    tracking_remote: str = tracking_remotes[0]
-
-    return CurrentLocalBranch(local_branch_name, tracking_remote, tracking_branch_name)
 
 
 def main() -> None:
