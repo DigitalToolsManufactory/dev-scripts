@@ -34,13 +34,13 @@ def get_current_local_branch(
     )
 
     if not tracking_branch_response.is_success:
-        return CurrentLocalBranch(current_branch_names[0])
+        return CurrentLocalBranch(local_branch_name)
 
     tracking_branches: List[str] = list(
         filter(lambda x: len(x) > 0, tracking_branch_response.get_stdout_lines())
     )
     if len(tracking_branches) != 1:
-        return CurrentLocalBranch(current_branch_names[0])
+        return CurrentLocalBranch(local_branch_name)
 
     tracking_branch_name: str = tracking_branches[0].removeprefix("refs/heads/")
 
@@ -49,13 +49,13 @@ def get_current_local_branch(
     )
 
     if not tracking_remote_response.is_success:
-        return CurrentLocalBranch(current_branch_names[0])
+        return CurrentLocalBranch(local_branch_name)
 
     tracking_remotes: List[str] = list(
         filter(lambda x: len(x) > 0, tracking_remote_response.get_stdout_lines())
     )
     if len(tracking_remotes) != 1:
-        return CurrentLocalBranch(current_branch_names[0])
+        return CurrentLocalBranch(local_branch_name)
 
     tracking_remote: str = tracking_remotes[0]
 
