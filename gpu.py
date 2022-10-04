@@ -1,6 +1,6 @@
 from argparse import ArgumentParser
 from pathlib import Path
-from typing import Any, Optional, List
+from typing import Any, List, Optional
 
 from development_environment.development_environment import DevelopmentEnvironment
 from development_environment.git_configuration import GitRemote
@@ -11,24 +11,38 @@ from utility.git_utility import CurrentLocalBranch
 from utility.type_utility import get_or_else
 
 
-def push_with_upstream(project: Path, remote_name: Optional[str] = None, shell: Optional[Shell] = None) -> None:
+def push_with_upstream(
+    project: Path, remote_name: Optional[str] = None, shell: Optional[Shell] = None
+) -> None:
     dev_env: DevelopmentEnvironment = DevelopmentEnvironment.load(project, shell)
 
-    local_branch: Optional[CurrentLocalBranch] = git_utility.get_current_local_branch(dev_env)
+    local_branch: Optional[CurrentLocalBranch] = git_utility.get_current_local_branch(
+        dev_env
+    )
 
     if local_branch is None:
-        raise Exception(f"Unable to determine current local branch in project '{project.expanduser().absolute()}'.")
+        raise Exception(
+            f"Unable to determine current local branch in project '{project.expanduser().absolute()}'."
+        )
 
     if local_branch.remote_name is not None and local_branch.tracking_name is not None:
         dev_env.shell.run_or_raise("git", ["push"], dev_env.root)
         return
 
-    actual_remote_name: Optional[str] = remote_name if remote_name is not None else _get_remote_name(dev_env)
+    actual_remote_name: Optional[str] = (
+        remote_name if remote_name is not None else _get_remote_name(dev_env)
+    )
 
     if actual_remote_name is None:
-        raise Exception(f"Unable to determine remote name in project '{project.expanduser().absolute()}'.")
+        raise Exception(
+            f"Unable to determine remote name in project '{project.expanduser().absolute()}'."
+        )
 
-    dev_env.shell.run_or_raise("git", ["push", "--set-upstream", actual_remote_name, local_branch.name], dev_env.root)
+    dev_env.shell.run_or_raise(
+        "git",
+        ["push", "--set-upstream", actual_remote_name, local_branch.name],
+        dev_env.root,
+    )
 
 
 def _get_remote_name(dev_env: DevelopmentEnvironment) -> Optional[str]:

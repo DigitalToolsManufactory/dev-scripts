@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import Optional, List
+from typing import List, Optional
 
 from development_environment.development_environment import DevelopmentEnvironment
 from shell.shell_response import ShellResponse
@@ -15,7 +15,7 @@ class CurrentLocalBranch:
 
 
 def get_current_local_branch(
-        dev_env: DevelopmentEnvironment,
+    dev_env: DevelopmentEnvironment,
 ) -> Optional[CurrentLocalBranch]:
     branch_response: ShellResponse = dev_env.shell.run("git", ["branch"], dev_env.root)
 

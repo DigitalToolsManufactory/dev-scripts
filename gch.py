@@ -13,17 +13,19 @@ from utility.type_utility import get_or_else
 
 
 def checkout_head_branch(
-        project: Path, remote_name: Optional[str] = None, shell: Optional[Shell] = None
+    project: Path, remote_name: Optional[str] = None, shell: Optional[Shell] = None
 ) -> None:
     dev_env: DevelopmentEnvironment = DevelopmentEnvironment.load(project, shell)
     remote, head_branch = _get_head_branch(dev_env, remote_name)
 
-    current_branch: Optional[CurrentLocalBranch] = git_utility.get_current_local_branch(dev_env)
+    current_branch: Optional[CurrentLocalBranch] = git_utility.get_current_local_branch(
+        dev_env
+    )
 
     if (
-            current_branch is None
-            or current_branch.tracking_name != head_branch
-            or current_branch.remote_name != remote
+        current_branch is None
+        or current_branch.tracking_name != head_branch
+        or current_branch.remote_name != remote
     ):
         # we are not on the branch that is already tracking the head branch. So we need to switch branches
         dev_env.shell.run_or_raise(
@@ -36,7 +38,7 @@ def checkout_head_branch(
 
 
 def _get_head_branch(
-        dev_env: DevelopmentEnvironment, remote_name: Optional[str]
+    dev_env: DevelopmentEnvironment, remote_name: Optional[str]
 ) -> Tuple[str, str]:
     dev_env_remotes: List[GitRemote] = get_or_else(
         dev_env.git_configuration.remotes, list
@@ -48,7 +50,7 @@ def _get_head_branch(
             remote
             for remote in dev_env_remotes
             if remote.head_branch is not None
-               and (remote_name is None or remote_name == remote.name)
+            and (remote_name is None or remote_name == remote.name)
         ]
 
         if len(matching_remotes) > 0:
