@@ -12,7 +12,10 @@ from utility.type_utility import get_or_else
 
 
 def push_with_upstream(
-    project: Path, remote_name: Optional[str] = None, shell: Optional[Shell] = None
+    project: Path,
+    remote_name: Optional[str] = None,
+    commit_message: Optional[str] = None,
+    shell: Optional[Shell] = None,
 ) -> None:
     dev_env: DevelopmentEnvironment = DevelopmentEnvironment.load(project, shell)
 
@@ -26,6 +29,7 @@ def push_with_upstream(
         )
 
     if local_branch.remote_name is not None and local_branch.tracking_name is not None:
+        _commit_changed_files(dev_env, commit_message)
         dev_env.shell.run_or_raise("git", ["push"], dev_env.root)
         return
 
@@ -38,6 +42,7 @@ def push_with_upstream(
             f"Unable to determine remote name in project '{project.expanduser().absolute()}'."
         )
 
+    _commit_changed_files(dev_env, commit_message)
     dev_env.shell.run_or_raise(
         "git",
         ["push", "--set-upstream", actual_remote_name, local_branch.name],
@@ -70,6 +75,23 @@ def _get_remote_name(dev_env: DevelopmentEnvironment) -> Optional[str]:
     return remote_names[0]
 
 
+def _commit_changed_files(
+    dev_env: DevelopmentEnvironment, message: Optional[str]
+) -> None:
+    if message is None or not _contains_changed_files(dev_env):
+        return
+
+    dev_env.shell.run_or_raise("git", ["commit", ".", "-m", message], dev_env.root)
+
+
+def _contains_changed_files(dev_env: DevelopmentEnvironment) -> bool:
+    response: ShellResponse = dev_env.shell.run(
+        "git", ["diff", "--name-only"], dev_env.root
+    )
+
+    return response.is_success and len(response.get_stdout_lines()) > 0
+
+
 def main() -> None:
     argument_parser: ArgumentParser = ArgumentParser(
         "Pushes local commits to the (default) remote."
@@ -78,9 +100,12 @@ def main() -> None:
 
     argument_parser.add_argument("--project", type=Path, required=True)
     argument_parser.add_argument("--remote-name", type=str, required=False)
+    argument_parser.add_argument("--message", "-m", type=str, required=False)
 
     parsed_args: Any = argument_parser.parse_args()
-    push_with_upstream(parsed_args.project, parsed_args.remote_name)
+    push_with_upstream(
+        parsed_args.project, parsed_args.remote_name, parsed_args.message
+    )
 
 
 if __name__ == "__main__":
