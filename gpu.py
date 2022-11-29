@@ -1,3 +1,4 @@
+import sys
 from argparse import ArgumentParser
 from pathlib import Path
 from typing import Any, List, Optional
@@ -28,6 +29,14 @@ def push_with_upstream(
             f"Unable to determine current local branch in project '{project.expanduser().absolute()}'."
         )
 
+    if local_branch.tracking_name is not None and local_branch.remote_name is not None:
+        if _is_protected_branch(
+            dev_env, local_branch.tracking_name, local_branch.remote_name
+        ) and not _should_force_push_to_protected_branch(
+            local_branch.tracking_name, local_branch.remote_name
+        ):
+            exit(0)
+
     if local_branch.remote_name is not None and local_branch.tracking_name is not None:
         _commit_changed_files(dev_env, commit_message)
         dev_env.shell.run_or_raise("git", ["push"], dev_env.root)
@@ -41,6 +50,13 @@ def push_with_upstream(
         raise Exception(
             f"Unable to determine remote name in project '{project.expanduser().absolute()}'."
         )
+
+    if _is_protected_branch(
+        dev_env, local_branch.name, actual_remote_name
+    ) and not _should_force_push_to_protected_branch(
+        local_branch.name, actual_remote_name
+    ):
+        exit(0)
 
     _commit_changed_files(dev_env, commit_message)
     dev_env.shell.run_or_raise(
@@ -90,6 +106,36 @@ def _contains_changed_files(dev_env: DevelopmentEnvironment) -> bool:
     )
 
     return response.is_success and len(response.get_stdout_lines()) > 0
+
+
+def _is_protected_branch(
+    dev_env: DevelopmentEnvironment, branch_name: str, remote_name: str
+) -> bool:
+    matching_remotes: List[GitRemote] = list(
+        filter(
+            lambda x: x.name == remote_name,
+            get_or_else(dev_env.git_configuration.remotes, list),
+        )
+    )
+
+    if len(matching_remotes) > 1:
+        raise AssertionError(f"Found more than one remotes with name '{remote_name}'.")
+
+    if len(matching_remotes) < 1:
+        return False
+
+    return matching_remotes[0].is_protected_branch(branch_name)
+
+
+def _should_force_push_to_protected_branch(branch_name: str, remote_name: str) -> bool:
+    print(f"!!! CAUTION !!!", file=sys.stderr)
+    print(
+        f"You are trying to push to a protected branch ('{branch_name}' in '{remote_name}').", file=sys.stderr
+    )
+    print(f"Are you sure? (y/N) ", file=sys.stderr, end="")
+
+    answer: str = input()
+    return answer.lower() == "y"
 
 
 def main() -> None:
