@@ -130,7 +130,8 @@ def _is_protected_branch(
 def _should_force_push_to_protected_branch(branch_name: str, remote_name: str) -> bool:
     print(f"!!! CAUTION !!!", file=sys.stderr)
     print(
-        f"You are trying to push to a protected branch ('{branch_name}' in '{remote_name}').", file=sys.stderr
+        f"You are trying to push to a protected branch ('{branch_name}' in '{remote_name}').",
+        file=sys.stderr,
     )
     print(f"Are you sure? (y/N) ", file=sys.stderr, end="")
 
