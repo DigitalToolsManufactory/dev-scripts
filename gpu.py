@@ -133,7 +133,7 @@ def _should_force_push_to_protected_branch(branch_name: str, remote_name: str) -
         f"You are trying to push to a protected branch ('{branch_name}' in '{remote_name}').",
         file=sys.stderr,
     )
-    print(f"Are you sure? (y/N) ", file=sys.stderr, end="")
+    print(f"Are you sure? (y/N): ", file=sys.stderr, end="")
 
     answer: str = input()
     return answer.lower() == "y"
