@@ -1,4 +1,4 @@
-import sys
+import os
 from argparse import ArgumentParser
 from pathlib import Path
 from typing import Any, Dict, List
@@ -30,12 +30,10 @@ def bump(
         unique_versions: List[str] = list(set(versions.values()))
 
         if len(unique_versions) == 1:
-            print(
-                f"::set-output name=old_version::{unique_versions[0]}", file=sys.stdout
-            )
+            __write_to_github_actions_output("old_version", unique_versions[0])
 
         else:
-            print(f"::set-output name=old_version::undefined", file=sys.stdout)
+            __write_to_github_actions_output("old_version", "undefined")
 
     project.bump_version(
         bump_type, assert_uniform_version=assert_uniform_version, write_modules=True
@@ -46,12 +44,14 @@ def bump(
         unique_versions: List[str] = list(set(versions.values()))
 
         if len(unique_versions) == 1:
-            print(
-                f"::set-output name=new_version::{unique_versions[0]}", file=sys.stdout
-            )
+            __write_to_github_actions_output("new_version", unique_versions[0])
 
         else:
-            print(f"::set-output name=new_version::undefined", file=sys.stdout)
+            __write_to_github_actions_output("new_version", "undefined")
+
+
+def __write_to_github_actions_output(key: str, value: str) -> None:
+    os.environ["GITHUB_OUTPUT"] += f"\n{key}={value}"
 
 
 def main() -> None:

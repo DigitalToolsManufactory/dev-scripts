@@ -1,7 +1,7 @@
 import json
 import re
 from abc import abstractmethod
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from re import Pattern
 from typing import Any, ClassVar, Dict, List, Optional, Union
@@ -34,8 +34,10 @@ class GitBranchProtectionRule:
 @dataclass(frozen=True)
 class GitRemote:
     name: str
-    head_branch: Optional[str]
-    branch_protection_rules: Optional[List[GitBranchProtectionRule]]
+    head_branch: Optional[str] = field(default=None)
+    branch_protection_rules: Optional[List[GitBranchProtectionRule]] = field(
+        default_factory=list
+    )
 
     @staticmethod
     def from_json(data: Dict[str, Any]) -> "GitRemote":
