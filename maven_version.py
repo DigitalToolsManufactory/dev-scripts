@@ -51,7 +51,17 @@ def bump(
 
 
 def __write_to_github_actions_output(key: str, value: str) -> None:
-    os.environ["GITHUB_OUTPUT"] += f"\n{key}={value}"
+    if "GITHUB_OUTPUT" not in os.environ:
+        print("UNABLE TO WRITE TO GITHUB_OUTPUT. '$GITHUB_OUTPUT' IS NOT DEFINED.")
+        return
+
+    output_path: str = os.environ["GITHUB_OUTPUT"]
+    if not output_path:
+        print("UNABLE TO WRITE TO GITHUB_OUTPUT. '$GITHUB_OUTPUT' IS NOT DEFINED.")
+        return
+
+    with open(output_path, "a+") as output_file:
+        print(f"{key}={value}", file=output_file)
 
 
 def main() -> None:
